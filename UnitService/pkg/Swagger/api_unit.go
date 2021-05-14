@@ -13,36 +13,56 @@ import (
 	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
 	"io"
+	"io/ioutil"
 	"net/http"
 	. "UnitService/pkg/Unit/app"
 )
 
 func UnitGet(w http.ResponseWriter, r *http.Request) {
-	s := " [ "
-	s += " { "
-	s += "	\"id\": \"c01d7cf6-ec3f-47f0-9556-a5d6e9009a43\", "
-	s += "	\"name\": \"Gregiory W. Morris\", "
-	s += "	\"forceName\": \"SPECIAL FORCES AIRBORNE\", "
-	s += "	\"hp\": 4, "
-	s += "	\"initiative\": 8, "
-	s += "	\"bs\": 1, "
-	s += "	\"fs\": 1, "
-	s += "	\"additionalRule\": \"When Morris move into hand to hand combat his roll is at +2.\" "
-	s += " } "
-	s += " ] "
+	b, err := GetJSONAllUnitById()
 
-	fmt.Fprintf(w,s)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	w.WriteHeader(http.StatusOK)
+	JSONResponse(w, b)
 }
 
 func UnitPost(w http.ResponseWriter, r *http.Request) {
+	b, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	defer r.Body.Close()
+
+	id, err := AddUnit(b)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	fmt.Fprintf(w,"\"" + id + "\"")
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.WriteHeader(http.StatusOK)
 }
 
 func UnitUnitIdDelete(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	id := vars["unitId"]
+
+	deleteId, err := DeleteById(id)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	fmt.Fprintf(w,"\"" + deleteId + "\"")
+
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.WriteHeader(http.StatusOK)
 }
@@ -62,6 +82,25 @@ func UnitUnitIdGet(w http.ResponseWriter, r *http.Request) {
 }
 
 func UnitUnitIdPut(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	id := vars["unitId"]
+
+	b, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	defer r.Body.Close()
+
+	updateId, err := UpdateUnit(id, b)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	fmt.Fprintf(w,"\"" + updateId + "\"")
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.WriteHeader(http.StatusOK)
 }
