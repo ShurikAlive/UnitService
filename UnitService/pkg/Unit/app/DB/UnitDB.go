@@ -38,6 +38,13 @@ type UnitInputDB struct {
 	AdditionalRule string
 }
 
+type RequiredParameters struct {
+	// FULL NAME unit
+	Name string
+	// force name unit
+	ForceName string
+}
+
 func SerializationUnitDB(unitMySQL UnitMySQL) (UnitDB) {
 	unit := UnitDB {
 		unitMySQL.Id,
@@ -68,8 +75,26 @@ func SerialitheUnitInputMySQL(unit UnitInputDB) (UnitInputMySQL) {
 	return unitMySQL
 }
 
+func SerialitheRequiredParameters(unitParams RequiredParameters) (RequiredParametersMySQL) {
+	unitParamsMySQL := RequiredParametersMySQL {
+		unitParams.Name,
+		unitParams.ForceName,
+	}
+
+	return unitParamsMySQL
+}
+
 func GetUnitInDBById(id string) (UnitDB, error) {
 	unitMySQL, err := GetUnitInMySQLById(id)
+	if err != nil {
+		return UnitDB{}, err
+	}
+	return SerializationUnitDB(unitMySQL), nil
+}
+
+func GetUnitInDBByRequiredParameters(unitParams RequiredParameters) (UnitDB, error) {
+	unitParamsMySQL := SerialitheRequiredParameters(unitParams)
+	unitMySQL, err := GetUnitInMySQLByRequiredParameters(unitParamsMySQL)
 	if err != nil {
 		return UnitDB{}, err
 	}
@@ -117,9 +142,4 @@ func DeleteUnit(id string) (string, error) {
 		return "", err
 	}
 	return deleteId, nil
-}
-
-func UnitExist(id string) (bool) {
-	isExist := UnitExistMySQL(id)
-	return isExist
 }

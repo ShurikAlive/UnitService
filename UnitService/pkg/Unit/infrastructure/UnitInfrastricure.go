@@ -123,6 +123,15 @@ func SerialitheUnitInputDB(unit Unit) (DB.UnitInputDB) {
 	return unitInputDB;
 }
 
+func SerialitheRequiredParameters(unit Unit) (DB.RequiredParameters) {
+	requiredParameters := DB.RequiredParameters {
+		unit.Name,
+		unit.ForceName,
+	}
+
+	return requiredParameters
+}
+
 func GenerateId() (string, error) {
 	u, err := uuid.NewV4()
 	if err != nil {
@@ -131,6 +140,37 @@ func GenerateId() (string, error) {
 
 	id := u.String()
 	return id, nil
+}
+
+func UnitIdExist(id string) (bool) {
+	unitFromDB, err := DB.GetUnitInDBById(id)
+	if err != nil {
+		return false
+	}
+
+	unitDB := DB.UnitDB{}
+
+	if unitFromDB.Id == unitDB.Id {
+		return false
+	}
+
+	return true
+}
+
+func UnitExist(unit Unit) (bool) {
+	unitInputDB := SerialitheRequiredParameters(unit)
+	unitFromDB, err := DB.GetUnitInDBByRequiredParameters(unitInputDB)
+	if err != nil {
+		return false
+	}
+
+	unitDB := DB.UnitDB{}
+
+	if unitFromDB.Id == unitDB.Id {
+		return false
+	}
+
+	return true
 }
 
 func GetUnitById(id string) (UnitInf, error) {
@@ -180,6 +220,9 @@ func AddNewUnit(unitInfo UnitEditInf) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	if UnitExist(unit) {
+		return "", errors.New("This unit Exist!")
+	}
 	unitInputDB := SerialitheUnitInputDB(unit)
 	insertedId, err := DB.InsertNewUnit(unitInputDB)
 	if err != nil {
@@ -195,8 +238,8 @@ func UpdateUnitInf(id string, unitEditInf UnitEditInf) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	if !DB.UnitExist(id) {
-		return "", errors.New("Unit not found!")
+	if !UnitIdExist(id) {
+		return "", errors.New("Unit id not found!")
 	}
 	unitInputDB := SerialitheUnitInputDB(unit)
 	updateId, err := DB.UpdateUnit(unitInputDB)
@@ -207,8 +250,8 @@ func UpdateUnitInf(id string, unitEditInf UnitEditInf) (string, error) {
 }
 
 func DeleteByIdInf(id string) (string, error) {
-	if !DB.UnitExist(id) {
-		return "", errors.New("Unit not found!")
+	if !UnitIdExist(id) {
+		return "", errors.New("Unit id not found!")
 	}
 	deleteId, err := DB.DeleteUnit(id)
 	if err != nil {
