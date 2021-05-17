@@ -90,7 +90,7 @@ func GetUnitInMySQLByRequiredParameters(requiredParams RequiredParametersMySQL) 
 		return UnitMySQL {}, errors.New("Error conection DB")
 	}
 
-	query := "query := SELECT * FROM unit_db.units where name = '" + requiredParams.Name + "' AND ForceName = '" + requiredParams.ForceName + "';";
+	query := "SELECT * FROM unit_db.units where name = '" + requiredParams.Name + "' AND ForceName = '" + requiredParams.ForceName + "';";
 	rows, err := db.Query(query)
 	if err != nil {
 		return UnitMySQL {}, err
@@ -121,22 +121,34 @@ func GetUnitInMySQLByRequiredParameters(requiredParams RequiredParametersMySQL) 
 }
 
 func GetAllUnitsInMySQL() ([]UnitMySQL, error) {
-	// TODO SELECT * FROM
-	units := []UnitMySQL {}
-	testUnit := UnitMySQL{
-		"c01d7cf6-ec3f-47f0-9556-a5d6e9009a43",
-		"Gregiory W. Morris",
-		"SPECIAL FORCES AIRBORNE",
-		4,
-		8,
-		1,
-		1,
-		"When Morris move into hand to hand combat his roll is at +2.",
+	db := DB.GetDBInstance()
+	if db == nil {
+		return []UnitMySQL {}, errors.New("Error conection DB")
 	}
 
-	units = append(units, testUnit)
-	units = append(units, testUnit)
-	units = append(units, testUnit)
+	rows, err := db.Query("SELECT * FROM unit_db.units;")
+	if err != nil {
+		return []UnitMySQL {}, err
+	}
+	defer rows.Close()
+
+	units := []UnitMySQL {}
+
+	for rows.Next() {
+		unitDBMySQL := UnitDBMySQL {}
+		err = rows.Scan(&unitDBMySQL.Id,
+			&unitDBMySQL.Name,
+			&unitDBMySQL.ForceName,
+			&unitDBMySQL.Hp,
+			&unitDBMySQL.Initiative,
+			&unitDBMySQL.Bs,
+			&unitDBMySQL.Fs,
+			&unitDBMySQL.AdditionalRule)
+		if err != nil {
+			return []UnitMySQL {}, err
+		}
+		units = append(units, SerialitheUnitDBMySQLByUnitMySQL(unitDBMySQL))
+	}
 
 	return units, nil
 }
@@ -147,7 +159,7 @@ func GetUnitInMySQLById(id string) (UnitMySQL, error) {
 		return UnitMySQL {}, errors.New("Error conection DB")
 	}
 
-	query := "query := SELECT * FROM unit_db.units where id = '" + id + "';";
+	query := "SELECT * FROM unit_db.units where id = '" + id + "';";
 	rows, err := db.Query(query)
 	if err != nil {
 		return UnitMySQL {}, err
@@ -175,35 +187,66 @@ func GetUnitInMySQLById(id string) (UnitMySQL, error) {
 	}
 
 	return SerialitheUnitDBMySQLByUnitMySQL(unitDBMySQL), nil
-/*
-	return UnitMySQL{
-		"c01d7cf6-ec3f-47f0-9556-a5d6e9009a43",
-		"Gregiory W. Morris",
-		"SPECIAL FORCES AIRBORNE",
-		4,
-		8,
-		1,
-		1,
-		"When Morris move into hand to hand combat his roll is at +2.",
-	}, nil
- */
 }
 
 func InsertNewUnitInMySQL(unit UnitInputMySQL) (string, error) {
-	// TODO INSERT INTO ...
+	db := DB.GetDBInstance()
+	if db == nil {
+		return "", errors.New("Error conection DB")
+	}
 
-	return "c01d7cf6-ec3f-47f0-9556-a5d6e9009a43", nil
+	_, err := db.Exec("INSERT INTO `unit_db`.`units` 	(`id`, `Name`, `ForceName`,	`Hp`, `Initiative`, `Bs`, `Fs`, `AdditionalRule`) VALUES (?, ?, ?, ?, ?, ?, ?, ?);",
+		unit.Id,
+		unit.Name,
+		unit.ForceName,
+		unit.Hp,
+		unit.Initiative,
+		unit.Bs,
+		unit.Fs,
+		unit.AdditionalRule)
+
+	if err != nil {
+		return "", err
+	}
+
+	return unit.Id, nil
 }
 
 func UpdateUnitInMySQL(unit UnitInputMySQL) (string, error) {
-	// TODO UPDATE ...
+	db := DB.GetDBInstance()
+	if db == nil {
+		return "", errors.New("Error conection DB")
+	}
 
-	return "c01d7cf6-ec3f-47f0-9556-a5d6e9009a43", nil
+	_, err := db.Exec("UPDATE `unit_db`.`units` SET `Name` = ?, `ForceName` = ?, `Hp` = ?, `Initiative` = ?, `Bs` = ?, `Fs` = ?, `AdditionalRule` = ? WHERE id = ?;",
+		unit.Name,
+		unit.ForceName,
+		unit.Hp,
+		unit.Initiative,
+		unit.Bs,
+		unit.Fs,
+		unit.AdditionalRule,
+		unit.Id)
+
+	if err != nil {
+		return "", err
+	}
+
+	return unit.Id, nil
 }
 
 func DeleteUnitInMySQL(id string) (string, error) {
-	// TODO DELETE ...
+	db := DB.GetDBInstance()
+	if db == nil {
+		return "", errors.New("Error conection DB")
+	}
 
-	return "c01d7cf6-ec3f-47f0-9556-a5d6e9009a43", nil
+	_, err := db.Exec("DELETE FROM `unit_db`.`units` WHERE id = ?;", id)
+
+	if err != nil {
+		return "", err
+	}
+
+	return id, nil
 }
 
