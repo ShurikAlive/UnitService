@@ -1,6 +1,14 @@
-package Unit
+package UnitModel
 
 import "errors"
+
+var InvalidUnitName = errors.New("incorrect name unit")
+var InvalidUnitForceName = errors.New("Incorrect force name unit")
+var InvalidUnitId = errors.New("Incorrect id unit")
+var InvalidUnitHp = errors.New("Incorrect hp value unit")
+var InvalidUnitFs = errors.New("Incorrect Fs value unit")
+var InvalidUnitBs = errors.New("Incorrect Bs value unit")
+var InvalidUnitInitiative = errors.New("Incorrect Initiative value unit")
 
 type Unit struct {
 	// ID unit
@@ -65,31 +73,31 @@ func SerializationUnit(unitInData UnitInputData) (Unit) {
 
 func CreateUnit(unitInData UnitInputData) (Unit, error) {
 	if IsEmpty(unitInData.Id) {
-		return Unit{}, errors.New("Incorrect id unit")
+		return Unit{}, InvalidUnitId
 	}
 
 	if IsEmpty(unitInData.Name) {
-		return Unit{}, errors.New("Incorrect name unit")
+		return Unit{}, InvalidUnitName
 	}
 
 	if IsEmpty(unitInData.ForceName)  {
-		return Unit{}, errors.New("Incorrect force name unit")
+		return Unit{}, InvalidUnitForceName
 	}
 
 	if IsNotNaturalNumber(unitInData.Hp) {
-		return Unit{}, errors.New("Incorrect hp value unit")
+		return Unit{}, InvalidUnitHp
 	}
 
 	if IsNotNaturalNumber(unitInData.Fs) {
-		return Unit{}, errors.New("Incorrect Fs value unit")
+		return Unit{}, InvalidUnitFs
 	}
 
 	if IsNotNaturalNumber(unitInData.Bs) {
-		return Unit{}, errors.New("Incorrect Bs value unit")
+		return Unit{}, InvalidUnitBs
 	}
 
 	if IsNotNaturalNumber(unitInData.Initiative) {
-		return Unit{}, errors.New("Incorrect Initiative value unit")
+		return Unit{}, InvalidUnitInitiative
 	}
 
 	return SerializationUnit(unitInData), nil

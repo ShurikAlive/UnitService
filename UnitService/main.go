@@ -1,11 +1,12 @@
 package main
 
 import (
-	DB "UnitService/pkg/DB/MySQLDB"
-	"UnitService/pkg/Swagger"
-	configs "UnitService/pkg/config"
+	"UnitService/DB"
+	Swagger "UnitService/Swagger/go"
+	Equipment "UnitService/pkg/Equipment/infrastructure/transport"
+	Unit "UnitService/pkg/Unit/infrastructure/transport"
 	"context"
-	"errors"
+	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
 	"net/http"
 	"os"
@@ -16,32 +17,22 @@ import (
 func main() {
 	serverParameters := initServerParameters()
 	initLogFile()
-	err := initDB()
+
+	db, err := DB.InitDB()
 	if err != nil {
 		return
 	}
-	defer DB.DisconectDB()
-	err = DB.MakeMigrationDB()
-	if err != nil {
-		return
-	}
+	defer db.DisconectDB()
+
 	serverUrl := serverParameters.ServeRESTAddress
 	killSignalChan := getKillSignalChan()
-	srv := startServer(serverUrl)
+	srv := startServer(db, serverUrl)
 	waitForKillSignal(killSignalChan)
 	srv.Shutdown(context.Background())
 }
 
-func initDB() (error) {
-	db := DB.GetDBInstance()
-	if db == nil {
-		return errors.New("Error init DB")
-	}
-	return nil
-}
-
-func initServerParameters() (*configs.Config) {
-	serverParameters, err := configs.ParseEnv()
+func initServerParameters() (*Config) {
+	serverParameters, err := ParseEnv()
 	if err != nil {
 		log.Fatal("Cannot init server parameters!")
 	}
@@ -57,8 +48,46 @@ func initLogFile() {
 	}
 }
 
-func startServer(serverUrl string) *http.Server {
+func InitUnitHendlerFunc(router *mux.Router, connection *DB.Connection) (*mux.Router) {
+	unitServer := Unit.CreateUnitServer(connection)
+
+	unitHandlerFuncs := map[string]http.HandlerFunc {
+		"UnitGet" : unitServer.UnitGet,
+		"UnitPost" : unitServer.UnitPost,
+		"UnitUnitIdDelete" : unitServer.UnitUnitIdDelete,
+		"UnitUnitIdPut" : unitServer.UnitUnitIdPut,
+		"UnitUnitIdGet" : unitServer.UnitUnitIdGet,
+	}
+
+	for name, unitHendlerFunc := range unitHandlerFuncs {
+		router.GetRoute(name).Handler(unitHendlerFunc)
+	}
+
+	return router
+}
+
+func InitEquipmentHendlerFunc(router *mux.Router, connection *DB.Connection) (*mux.Router) {
+	equipmentServer := Equipment.CreateEquipmentServer(connection)
+
+	equipmentHandlerFuncs := map[string]http.HandlerFunc {
+		"EquipmentEquipmentIdDelete" : equipmentServer.EquipmentEquipmentIdDelete,
+		"EquipmentEquipmentIdGet" : equipmentServer.EquipmentEquipmentIdGet,
+		"EquipmentEquipmentIdPut" : equipmentServer.EquipmentEquipmentIdPut,
+		"EquipmentGet" : equipmentServer.EquipmentGet,
+		"EquipmentPost" : equipmentServer.EquipmentPost,
+	}
+
+	for name, equipmentHendlerFunc := range equipmentHandlerFuncs {
+		router.GetRoute(name).Handler(equipmentHendlerFunc)
+	}
+
+	return router
+}
+
+func startServer(connection *DB.Connection, serverUrl string) *http.Server {
 	router := Swagger.NewRouter()
+	router = InitUnitHendlerFunc(router, connection)
+	router = InitEquipmentHendlerFunc(router, connection)
 	log.Fatal(http.ListenAndServe(serverUrl, router))
 	srv := &http.Server{Addr: serverUrl, Handler: router}
 	go func() {
@@ -82,3 +111,6 @@ func waitForKillSignal(killSignalChan <-chan os.Signal) {
 		log.Info("got SIGTERM...")
 	}
 }
+
+
+
