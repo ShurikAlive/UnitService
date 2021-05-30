@@ -1,8 +1,8 @@
 package main
 
 import (
-	"UnitService/DB"
 	Swagger "UnitService/Swagger/go"
+	"UnitService/cmd/DB"
 	Equipment "UnitService/pkg/Equipment/infrastructure/transport"
 	Unit "UnitService/pkg/Unit/infrastructure/transport"
 	"context"

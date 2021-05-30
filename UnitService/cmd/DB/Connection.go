@@ -11,13 +11,13 @@ type Connection struct {
 	Db *sql.DB
 }
 
-var errorEmptyConnection  = errors.New("Error DB connection")
-var errorInitConnection  = errors.New("Error Init Connection DB")
-var errorRecordNotFound = errors.New("Record Not Found")
+var ErrorEmptyConnection  = errors.New("Error DB connection")
+var ErrorInitConnection  = errors.New("Error Init Connection DB")
+var ErrorRecordNotFound = errors.New("Record Not Found")
 
 func (db *Connection) MakeMigrationDB() (error) {
 	if db.Db == nil {
-		return errorEmptyConnection
+		return ErrorEmptyConnection
 	}
 
 	driver, err := mysql.WithInstance(db.Db, &mysql.Config{})
@@ -60,7 +60,7 @@ func ConnectDB() (*sql.DB) {
 func InitDB() (*Connection, error) {
 	instDB := ConnectDB()
 	if instDB == nil {
-		return nil, errorInitConnection
+		return nil, ErrorInitConnection
 	}
 
 	var connect = new(Connection)

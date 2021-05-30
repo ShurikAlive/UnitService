@@ -1,15 +1,34 @@
 package EquipmentApp
 
 import (
-	EquipmentDB "UnitService/pkg/Equipment/infrastructure/DB"
-	EquipmentModel "UnitService/pkg/Equipment/model"
+	Model "UnitService/pkg/Equipment/model"
 	"errors"
 	uuid "github.com/nu7hatch/gouuid"
 )
 
-var ErrorUnitNotFound = errors.New("Unit id not found!")
+var ErrorEquipmentNotFound = errors.New("equipment id not found!")
+
+type IEquipmentDB interface {
+	GetEquipmentInDBById(id string) (Model.Equipment, error)
+	GetEquipmentInDBByRequiredParameters(equipmentParams RequiredParameters) (Model.Equipment, error)
+	GetAllEquipments() ([]Model.Equipment, error)
+	InsertNewEquipment(equipment Model.Equipment) (string, error)
+	UpdateEquipment(equipment Model.Equipment) (string, error)
+	DeleteEquipment(id string) (string, error)
+}
 
 type EquipmentApp struct {
+	db IEquipmentDB
+}
+
+type RequiredParameters struct {
+	// FULL NAME unit
+	Name string
+	// cost equipment in game points
+	Cost int32
+}
+
+type EquipmentAppData struct {
 	// ID equipment
 	Id string
 	// FULL NAME equipment
@@ -28,7 +47,7 @@ type EquipmentApp struct {
 	Cost int32
 }
 
-type EditEquipmentApp struct {
+type EditEquipmentAppData struct {
 	// FULL NAME equipment
 	Name string
 	// limit equipment on one unit. -1 - unlimit
@@ -55,68 +74,57 @@ func GenerateId() (string, error) {
 	return id, nil
 }
 
-func ConvertEquipmentDBToEquipmentApp (equipmentDB EquipmentDB.EquipmentDB) EquipmentApp {
-	equipment := EquipmentApp {
-		equipmentDB.Id,
-		equipmentDB.Name,
-		equipmentDB.LimitOnUnit,
-		equipmentDB.LimitOnTeam,
-		equipmentDB.SoldarRole,
-		equipmentDB.Rule,
-		equipmentDB.Ammo,
-		equipmentDB.Cost,
+func CreateEquipmentApp(db IEquipmentDB) EquipmentApp {
+	return EquipmentApp{db}
+}
+
+func (app *EquipmentApp) convertEditEquipmentAppToEquipmentApp (id string, equipmentEdit EditEquipmentAppData) EquipmentAppData {
+	equipment := EquipmentAppData {
+		Id:          id,
+		Name:        equipmentEdit.Name,
+		LimitOnUnit: equipmentEdit.LimitOnUnit,
+		LimitOnTeam: equipmentEdit.LimitOnTeam,
+		SoldarRole:  equipmentEdit.SoldarRole,
+		Rule:        equipmentEdit.Rule,
+		Ammo:        equipmentEdit.Ammo,
+		Cost:        equipmentEdit.Cost,
 	}
 
 	return equipment
 }
 
-func ConvertEditEquipmentAppToEquipmentApp (id string, equipmentEdit EditEquipmentApp) EquipmentApp {
-	equipment := EquipmentApp {
-		id,
-		equipmentEdit.Name,
-		equipmentEdit.LimitOnUnit,
-		equipmentEdit.LimitOnTeam,
-		equipmentEdit.SoldarRole,
-		equipmentEdit.Rule,
-		equipmentEdit.Ammo,
-		equipmentEdit.Cost,
-	}
-
-	return equipment
-}
-
-func ConvertEquipmentAppToEquipmentInputData(equipment EquipmentApp) EquipmentModel.EquipmentInputData {
-	equipmentInput := EquipmentModel.EquipmentInputData {
-		equipment.Id,
-		equipment.Name,
-		equipment.LimitOnUnit,
-		equipment.LimitOnTeam,
-		equipment.SoldarRole,
-		equipment.Rule,
-		equipment.Ammo,
-		equipment.Cost,
+func (app *EquipmentApp) convertEquipmentAppToEquipmentInputData(equipment EquipmentAppData) Model.EquipmentInputData {
+	equipmentInput := Model.EquipmentInputData {
+		Id:          equipment.Id,
+		Name:        equipment.Name,
+		LimitOnUnit: equipment.LimitOnUnit,
+		LimitOnTeam: equipment.LimitOnTeam,
+		SoldarRole:  equipment.SoldarRole,
+		Rule:        equipment.Rule,
+		Ammo:        equipment.Ammo,
+		Cost:        equipment.Cost,
 	}
 
 	return equipmentInput
 }
 
-func ConvertEquipmentToUnitInputDB(equipment EquipmentModel.Equipment) EquipmentDB.EquipmentInputDB {
-	equipmentInDB := EquipmentDB.EquipmentInputDB {
-		equipment.Id,
-		equipment.Name,
-		equipment.LimitOnUnit,
-		equipment.LimitOnTeam,
-		equipment.SoldarRole,
-		equipment.Rule,
-		equipment.Ammo,
-		equipment.Cost,
+func (app *EquipmentApp) convertEquipmentToEquipmentApp(equipment Model.Equipment) EquipmentAppData {
+	equipmentApp := EquipmentAppData {
+		Id:          equipment.Id,
+		Name:        equipment.Name,
+		LimitOnUnit: equipment.LimitOnUnit,
+		LimitOnTeam: equipment.LimitOnTeam,
+		SoldarRole:  equipment.SoldarRole,
+		Rule:        equipment.Rule,
+		Ammo:        equipment.Ammo,
+		Cost:        equipment.Cost,
 	}
 
-	return equipmentInDB
+	return equipmentApp
 }
 
-func EquipmentIdExist(db EquipmentDB.IEquipmentDB, id string) bool {
-	equipmentFromDB, err := db.GetEquipmentInDBById(id)
+func (app *EquipmentApp) equipmentIdExist(id string) bool {
+	equipmentFromDB, err := app.db.GetEquipmentInDBById(id)
 	if err != nil {
 		return false
 	}
@@ -128,8 +136,8 @@ func EquipmentIdExist(db EquipmentDB.IEquipmentDB, id string) bool {
 	return true
 }
 
-func ConvertEquipmentToEquipmentRequiredParameters(equipment EquipmentModel.Equipment) EquipmentDB.RequiredParameters {
-	requiredParameters := EquipmentDB.RequiredParameters {
+func (app *EquipmentApp) convertEquipmentToEquipmentRequiredParameters(equipment Model.Equipment) RequiredParameters {
+	requiredParameters := RequiredParameters {
 		equipment.Name,
 		equipment.Cost,
 	}
@@ -137,9 +145,9 @@ func ConvertEquipmentToEquipmentRequiredParameters(equipment EquipmentModel.Equi
 	return requiredParameters
 }
 
-func EquipmentExist(db EquipmentDB.IEquipmentDB, equipment EquipmentModel.Equipment) (bool) {
-	equipmentInputDB := ConvertEquipmentToEquipmentRequiredParameters(equipment)
-	unitFromDB, err := db.GetEquipmentInDBByRequiredParameters(equipmentInputDB)
+func (app *EquipmentApp) EquipmentExist(equipment Model.Equipment) bool {
+	equipmentInputDB := app.convertEquipmentToEquipmentRequiredParameters(equipment)
+	unitFromDB, err := app.db.GetEquipmentInDBByRequiredParameters(equipmentInputDB)
 	if err != nil {
 		return false
 	}
@@ -151,11 +159,19 @@ func EquipmentExist(db EquipmentDB.IEquipmentDB, equipment EquipmentModel.Equipm
 	return true
 }
 
-func DeleteByIdApp(db EquipmentDB.IEquipmentDB, id string) (string, error) {
-	if !EquipmentIdExist(db, id) {
-		return "", ErrorUnitNotFound
+func (app *EquipmentApp) assertEquipmentIdNotExist(id string) error {
+	if !app.equipmentIdExist(id) {
+		return ErrorEquipmentNotFound
 	}
-	deleteId, err := db.DeleteEquipment(id)
+	return nil
+}
+
+func (app *EquipmentApp) DeleteByIdApp(id string) (string, error) {
+	err := app.assertEquipmentIdNotExist(id)
+	if err != nil {
+		return "", err
+	}
+	deleteId, err := app.db.DeleteEquipment(id)
 	if err != nil {
 		return "", err
 	}
@@ -163,66 +179,72 @@ func DeleteByIdApp(db EquipmentDB.IEquipmentDB, id string) (string, error) {
 }
 
 
-func GetEquipmentById(db EquipmentDB.IEquipmentDB, id string) (EquipmentApp, error) {
-	equipmentFromDB, err := db.GetEquipmentInDBById(id)
+func (app *EquipmentApp) GetEquipmentById(id string) (EquipmentAppData, error) {
+	equipmentFromDB, err := app.db.GetEquipmentInDBById(id)
 	if err != nil {
-		return EquipmentApp {}, err
+		return EquipmentAppData {}, err
 	}
-	equipmentApp := ConvertEquipmentDBToEquipmentApp(equipmentFromDB)
+	equipmentApp := app.convertEquipmentToEquipmentApp(equipmentFromDB)
 	return equipmentApp, nil
 }
 
-func AddNewEquipment(db EquipmentDB.IEquipmentDB, equipmentInfo EditEquipmentApp) (string, error) {
+func (app *EquipmentApp) assertEquipmentExist(equipment Model.Equipment) error {
+	if app.EquipmentExist(equipment) {
+		return ErrorEquipmentNotFound
+	}
+	return nil
+}
+
+func (app *EquipmentApp) AddNewEquipment(equipmentInfo EditEquipmentAppData) (string, error) {
 	id, err := GenerateId()
 	if err != nil {
 		return "", err
 	}
-	equipmentApp := ConvertEditEquipmentAppToEquipmentApp(id, equipmentInfo)
-	equipmentInData := ConvertEquipmentAppToEquipmentInputData(equipmentApp)
-	equipment, err := EquipmentModel.CreateEquipment(equipmentInData)
+	equipmentApp := app.convertEditEquipmentAppToEquipmentApp(id, equipmentInfo)
+	equipmentInData := app.convertEquipmentAppToEquipmentInputData(equipmentApp)
+	equipment, err := Model.CreateEquipment(equipmentInData)
 	if err != nil {
 		return "", err
 	}
-	if EquipmentExist(db, equipment) {
-		return "", ErrorUnitNotFound
+	err = app.assertEquipmentExist(equipment)
+	if err != nil {
+		return "", err
 	}
-	equipmentInputDB := ConvertEquipmentToUnitInputDB(equipment)
-	insertedId, err := db.InsertNewEquipment(equipmentInputDB)
+	insertedId, err := app.db.InsertNewEquipment(equipment)
 	if err != nil {
 		return "", err
 	}
 	return insertedId, nil
 }
 
-
-func UpdateEquipmentApp(db EquipmentDB.IEquipmentDB, id string, equipmentInfo EditEquipmentApp) (string, error) {
-	equipmentApp := ConvertEditEquipmentAppToEquipmentApp(id, equipmentInfo)
-	equipmentInData := ConvertEquipmentAppToEquipmentInputData(equipmentApp)
-	equipment, err := EquipmentModel.CreateEquipment(equipmentInData)
+func (app *EquipmentApp) UpdateEquipmentApp(id string, equipmentInfo EditEquipmentAppData) (string, error) {
+	equipmentApp := app.convertEditEquipmentAppToEquipmentApp(id, equipmentInfo)
+	equipmentInData := app.convertEquipmentAppToEquipmentInputData(equipmentApp)
+	equipment, err := Model.CreateEquipment(equipmentInData)
 	if err != nil {
 		return "", err
 	}
-	if !EquipmentIdExist(db, id) {
-		return "", ErrorUnitNotFound
+	err = app.assertEquipmentIdNotExist(id)
+	if err != nil {
+		return "", err
 	}
-	equipmentInputDB := ConvertEquipmentToUnitInputDB(equipment)
-	updateId, err := db.UpdateEquipment(equipmentInputDB)
+	updateId, err := app.db.UpdateEquipment(equipment)
 	if err != nil {
 		return "", err
 	}
 	return updateId, nil
 }
 
-func GetAllEquipment(db EquipmentDB.IEquipmentDB) ([]EquipmentApp, error) {
-	var equipments = []EquipmentApp{}
-	equipmentsDB, err := db.GetAllEquipments()
+func (app *EquipmentApp) GetAllEquipment() ([]EquipmentAppData, error) {
+	var equipments []EquipmentAppData
+	equipmentsDB, err := app.db.GetAllEquipments()
 	if err != nil {
 		return equipments, err
 	}
 
 	for i := 0; i < len(equipmentsDB); i++ {
 		equipmentDB := equipmentsDB[i]
-		equipmentApp := ConvertEquipmentDBToEquipmentApp(equipmentDB)
+		equipmentApp := app.convertEquipmentToEquipmentApp(equipmentDB)
 		equipments = append(equipments, equipmentApp)
 	}
 

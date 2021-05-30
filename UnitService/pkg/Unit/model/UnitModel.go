@@ -3,12 +3,12 @@ package UnitModel
 import "errors"
 
 var InvalidUnitName = errors.New("incorrect name unit")
-var InvalidUnitForceName = errors.New("Incorrect force name unit")
-var InvalidUnitId = errors.New("Incorrect id unit")
-var InvalidUnitHp = errors.New("Incorrect hp value unit")
-var InvalidUnitFs = errors.New("Incorrect Fs value unit")
-var InvalidUnitBs = errors.New("Incorrect Bs value unit")
-var InvalidUnitInitiative = errors.New("Incorrect Initiative value unit")
+var InvalidUnitForceName = errors.New("incorrect force name unit")
+var InvalidUnitId = errors.New("incorrect id unit")
+var InvalidUnitHp = errors.New("incorrect hp value unit")
+var InvalidUnitFs = errors.New("incorrect Fs value unit")
+var InvalidUnitBs = errors.New("incorrect Bs value unit")
+var InvalidUnitInitiative = errors.New("incorrect Initiative value unit")
 
 type Unit struct {
 	// ID unit
@@ -48,15 +48,64 @@ type UnitInputData struct {
 	AdditionalRule string
 }
 
-func IsEmpty(param string) bool {
+func isEmpty(param string) bool {
 	return param == ""
 }
 
-func IsNotNaturalNumber(param int32) bool {
+func isNotNaturalNumber(param int32) bool {
 	return param <= 0
 }
 
-func SerializationUnit(unitInData UnitInputData) (Unit) {
+func assertIdEmptiness(id string) error {
+	if isEmpty(id) {
+		return InvalidUnitId
+	}
+	return nil
+}
+
+func assertNameEmptiness(name string) error {
+	if isEmpty(name) {
+		return InvalidUnitName
+	}
+	return nil
+}
+
+func assertForceNameEmptiness(forceName string) error {
+	if isEmpty(forceName) {
+		return InvalidUnitForceName
+	}
+	return nil
+}
+
+func assertHpIncorrect(hp int32) error {
+	if isNotNaturalNumber(hp) {
+		return InvalidUnitHp
+	}
+	return nil
+}
+
+func assertFsIncorrect(fs int32) error {
+	if isNotNaturalNumber(fs) {
+		return InvalidUnitFs
+	}
+	return nil
+}
+
+func assertBsIncorrect(bs int32) error {
+	if isNotNaturalNumber(bs) {
+		return InvalidUnitBs
+	}
+	return nil
+}
+
+func assertInitiativeIncorrect(initiative int32) error {
+	if isNotNaturalNumber(initiative) {
+		return InvalidUnitInitiative
+	}
+	return nil
+}
+
+func ConvertUnitInputDataToUnit(unitInData UnitInputData) Unit {
 	unit := Unit{
 		unitInData.Id,
 		unitInData.Name,
@@ -72,33 +121,40 @@ func SerializationUnit(unitInData UnitInputData) (Unit) {
 }
 
 func CreateUnit(unitInData UnitInputData) (Unit, error) {
-	if IsEmpty(unitInData.Id) {
-		return Unit{}, InvalidUnitId
+	err := assertIdEmptiness(unitInData.Id)
+	if err != nil {
+		return Unit{}, err
 	}
 
-	if IsEmpty(unitInData.Name) {
-		return Unit{}, InvalidUnitName
+	err = assertNameEmptiness(unitInData.Name)
+	if err != nil {
+		return Unit{}, err
 	}
 
-	if IsEmpty(unitInData.ForceName)  {
-		return Unit{}, InvalidUnitForceName
+	err = assertForceNameEmptiness(unitInData.ForceName)
+	if err != nil {
+		return Unit{}, err
 	}
 
-	if IsNotNaturalNumber(unitInData.Hp) {
-		return Unit{}, InvalidUnitHp
+	err = assertHpIncorrect(unitInData.Hp)
+	if err != nil {
+		return Unit{}, err
 	}
 
-	if IsNotNaturalNumber(unitInData.Fs) {
-		return Unit{}, InvalidUnitFs
+	err = assertBsIncorrect(unitInData.Bs)
+	if err != nil {
+		return Unit{}, err
 	}
 
-	if IsNotNaturalNumber(unitInData.Bs) {
-		return Unit{}, InvalidUnitBs
+	err = assertFsIncorrect(unitInData.Fs)
+	if err != nil {
+		return Unit{}, err
 	}
 
-	if IsNotNaturalNumber(unitInData.Initiative) {
-		return Unit{}, InvalidUnitInitiative
+	err =  assertInitiativeIncorrect(unitInData.Initiative)
+	if err != nil {
+		return Unit{}, err
 	}
 
-	return SerializationUnit(unitInData), nil
+	return ConvertUnitInputDataToUnit(unitInData), nil
 }

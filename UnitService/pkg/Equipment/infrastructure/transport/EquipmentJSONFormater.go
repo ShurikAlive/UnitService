@@ -1,11 +1,13 @@
 package EquipmentTransport
 
 import (
-	"UnitService/DB"
-	EquipmentDB "UnitService/pkg/Equipment/infrastructure/DB"
-	EquipmentApp "UnitService/pkg/Equipment/app"
+	App "UnitService/pkg/Equipment/app"
 	"encoding/json"
 )
+
+type JsonFormatter struct {
+
+}
 
 type EquipmentJSON struct {
 	// ID equipment
@@ -43,39 +45,15 @@ type EditEquipmentJSON struct {
 	Cost int32 `json:"cost"`
 }
 
-func ConvertEquipmentAppToEquipmentJson(equipmentApp EquipmentApp.EquipmentApp) (EquipmentJSON) {
-	equipment := EquipmentJSON{
-		equipmentApp.Id,
-		equipmentApp.Name,
-		equipmentApp.LimitOnUnit,
-		equipmentApp.LimitOnTeam,
-		equipmentApp.SoldarRole,
-		equipmentApp.Rule,
-		equipmentApp.Ammo,
-		equipmentApp.Cost,
-	}
-
-	return equipment
+func CreateJSONFormatter() JsonFormatter {
+	return JsonFormatter{}
 }
 
-func ConvertEditEquipmentJsonToEquipmentEditApp(editEquipmentJSON EditEquipmentJSON) (EquipmentApp.EditEquipmentApp) {
-	equipment := EquipmentApp.EditEquipmentApp{
-		editEquipmentJSON.Name,
-		editEquipmentJSON.LimitOnUnit,
-		editEquipmentJSON.LimitOnTeam,
-		editEquipmentJSON.SoldarRole,
-		editEquipmentJSON.Rule,
-		editEquipmentJSON.Ammo,
-		editEquipmentJSON.Cost,
-	}
 
-	return equipment
-}
-
-func ConvertAllEquipmentsToEquipmentsJson(allEquipments []EquipmentApp.EquipmentApp) ([]EquipmentJSON) {
-	equipments := []EquipmentJSON {}
-	for i := 0; i < len(allEquipments); i++ {
-		equipmentApp := allEquipments[i]
+func (formatter *JsonFormatter) convertAllEquipmentAppToAllEquipmentJson(equipmentsApp []App.EquipmentAppData) []EquipmentJSON {
+	var equipments []EquipmentJSON
+	for i := 0; i < len(equipmentsApp); i++ {
+		equipmentApp := equipmentsApp[i]
 		equipment := EquipmentJSON {
 			equipmentApp.Id,
 			equipmentApp.Name,
@@ -93,59 +71,42 @@ func ConvertAllEquipmentsToEquipmentsJson(allEquipments []EquipmentApp.Equipment
 	return equipments
 }
 
-func DeleteById(connection *DB.Connection, id string) (string, error) {
-	mySQLDB := EquipmentDB.CreateMySQLDB(connection)
-	deleteId, err := EquipmentApp.DeleteByIdApp(&mySQLDB, id)
-	if err != nil {
-		return "", err
+func (formatter *JsonFormatter) convertEquipmentAppToAllEquipmentJson(equipmentApp App.EquipmentAppData) EquipmentJSON {
+	equipment := EquipmentJSON{
+		equipmentApp.Id,
+		equipmentApp.Name,
+		equipmentApp.LimitOnUnit,
+		equipmentApp.LimitOnTeam,
+		equipmentApp.SoldarRole,
+		equipmentApp.Rule,
+		equipmentApp.Ammo,
+		equipmentApp.Cost,
 	}
 
-	return deleteId, nil
+	return equipment
 }
 
-func GetJSONEquipmentById(connection *DB.Connection, id string) ([]byte, error) {
-	mySQLDB := EquipmentDB.CreateMySQLDB(connection)
-	equipmentApp, err := EquipmentApp.GetEquipmentById(&mySQLDB, id)
-	if err != nil {
-		return nil, err
+func (formatter *JsonFormatter) convertEditEquipmentJSONToEquipmentEditAppData(equipment EditEquipmentJSON) App.EditEquipmentAppData {
+	equipmentApp := App.EditEquipmentAppData{
+		equipment.Name,
+		equipment.LimitOnUnit,
+		equipment.LimitOnTeam,
+		equipment.SoldarRole,
+		equipment.Rule,
+		equipment.Ammo,
+		equipment.Cost,
 	}
 
-	units := ConvertEquipmentAppToEquipmentJson(equipmentApp)
-	b, err := json.Marshal(units)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return b, nil
+	return equipmentApp
 }
 
-func UpdateEquipment(connection *DB.Connection, id string, equipmentJson []byte) (string, error) {
-	var msg EditEquipmentJSON
-	err := json.Unmarshal(equipmentJson, &msg)
-	if err != nil {
-		return "", err
-	}
-
-	equipmentEditApp:= ConvertEditEquipmentJsonToEquipmentEditApp(msg)
-	mySQLDB := EquipmentDB.CreateMySQLDB(connection)
-	idEdit, err := EquipmentApp.UpdateEquipmentApp(&mySQLDB, id, equipmentEditApp)
-	if err != nil {
-		return "", err
-	}
-
-	return idEdit, nil
+func (formatter *JsonFormatter) ConvertIdToJSON (id string) string {
+	return "\"" + id + "\""
 }
 
-func GetJSONAllEquipment(connection *DB.Connection) ([]byte, error) {
-	mySQLDB := EquipmentDB.CreateMySQLDB(connection)
-	allEquipments, err := EquipmentApp.GetAllEquipment(&mySQLDB)
-	if err != nil {
-		return nil, err
-	}
-
-	equipments := ConvertAllEquipmentsToEquipmentsJson(allEquipments)
-	b, err := json.Marshal(equipments)
+func (formatter *JsonFormatter) ConvertAllEquipmentAppDataToJSON (equipments []App.EquipmentAppData)  ([]byte, error) {
+	equipmentsJson := formatter.convertAllEquipmentAppToAllEquipmentJson(equipments)
+	b, err := json.Marshal(equipmentsJson)
 
 	if err != nil {
 		return nil, err
@@ -154,19 +115,24 @@ func GetJSONAllEquipment(connection *DB.Connection) ([]byte, error) {
 	return b, nil
 }
 
-func AddEquipment(connection *DB.Connection, equipmentJson []byte) (string, error) {
+func (formatter *JsonFormatter) ConvertEquipmentAppDataToJSON (equipment App.EquipmentAppData)  ([]byte, error) {
+	equipmentJson := formatter.convertEquipmentAppToAllEquipmentJson(equipment)
+	b, err := json.Marshal(equipmentJson)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return b, nil
+}
+
+func (formatter *JsonFormatter) ConvertJsonToEquipmentEditAppData (equipmentJson []byte) (App.EditEquipmentAppData, error) {
 	var msg EditEquipmentJSON
 	err := json.Unmarshal(equipmentJson, &msg)
 	if err != nil {
-		return "", err
+		return App.EditEquipmentAppData{}, err
 	}
 
-	equipmentEditApp:= ConvertEditEquipmentJsonToEquipmentEditApp(msg)
-	mySQLDB := EquipmentDB.CreateMySQLDB(connection)
-	id, err := EquipmentApp.AddNewEquipment(&mySQLDB, equipmentEditApp)
-	if err != nil {
-		return "", err
-	}
-
-	return id, nil
+	return formatter.convertEditEquipmentJSONToEquipmentEditAppData(msg), nil
 }
+

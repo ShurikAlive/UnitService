@@ -1,36 +1,37 @@
 package EquipmentMySQLDB
 
 import (
-	"UnitService/DB"
+	"UnitService/cmd/DB"
+	Model "UnitService/pkg/Equipment/model"
+	App "UnitService/pkg/Equipment/app"
 	"errors"
 )
 
-var errorEmptyConnection  = errors.New("Error DB connection")
-var errorInitConnection  = errors.New("Error Init Connection DB")
-var errorRecordNotFound = errors.New("Record Not Found")
+var ErrorEmptyConnection  = errors.New("error DB connection")
+var ErrorInitConnection  = errors.New("error Init Connection DB")
+var ErrorRecordNotFound = errors.New("record Not Found")
 
 type MySQLDB struct {
 	Connection *DB.Connection
 }
 
-func CreateMySQLDB(connection *DB.Connection) (MySQLDB) {
-	return MySQLDB{connection}
+func CreateMySQLDB(connection *DB.Connection) App.IEquipmentDB {
+	if connection.Db == nil {
+		return nil
+	}
+	return &MySQLDB{connection}
 }
 
 
-func (db *MySQLDB) GetEquipmentInDBById(id string) (EquipmentDB, error) {
-	if db.Connection.Db == nil {
-		return EquipmentDB{}, errorEmptyConnection
-	}
-
+func (db *MySQLDB) GetEquipmentInDBById(id string) (Model.Equipment, error) {
 	query := "SELECT * FROM unit_db.equipments where id = '" + id + "';";
 	rows, err := db.Connection.Db.Query(query)
 	if err != nil {
-		return EquipmentDB{}, err
+		return Model.Equipment{}, err
 	}
 	defer rows.Close()
 
-	equipmentDB := EquipmentDB{}
+	equipmentDB := Model.Equipment{}
 	for rows.Next() {
 		err = rows.Scan(&equipmentDB.Id,
 			&equipmentDB.Name,
@@ -41,30 +42,26 @@ func (db *MySQLDB) GetEquipmentInDBById(id string) (EquipmentDB, error) {
 			&equipmentDB.Ammo,
 			&equipmentDB.Cost)
 		if err != nil {
-			return EquipmentDB{}, err
+			return Model.Equipment{}, err
 		}
 	}
 
 	if equipmentDB.Id == "" {
-		return EquipmentDB{}, errorRecordNotFound
+		return Model.Equipment{}, ErrorRecordNotFound
 	}
 
 	return equipmentDB, nil
 }
 
-func (db *MySQLDB) GetEquipmentInDBByRequiredParameters(equipmentParams RequiredParameters) (EquipmentDB, error) {
-	if db.Connection.Db == nil {
-		return EquipmentDB{}, errorEmptyConnection
-	}
-
+func (db *MySQLDB) GetEquipmentInDBByRequiredParameters(equipmentParams App.RequiredParameters) (Model.Equipment, error) {
 	query := "SELECT * FROM unit_db.equipments where name = '" + equipmentParams.Name + "' AND Cost = " + string(equipmentParams.Cost) + ";";
 	rows, err := db.Connection.Db.Query(query)
 	if err != nil {
-		return EquipmentDB{}, err
+		return Model.Equipment{}, err
 	}
 	defer rows.Close()
 
-	equipmentDB := EquipmentDB{}
+	equipmentDB := Model.Equipment{}
 	for rows.Next() {
 		err = rows.Scan(&equipmentDB.Id,
 			&equipmentDB.Name,
@@ -75,32 +72,28 @@ func (db *MySQLDB) GetEquipmentInDBByRequiredParameters(equipmentParams Required
 			&equipmentDB.Ammo,
 			&equipmentDB.Cost)
 		if err != nil {
-			return EquipmentDB{}, err
+			return Model.Equipment{}, err
 		}
 	}
 
 	if equipmentDB.Id == "" {
-		return EquipmentDB{}, errorRecordNotFound
+		return Model.Equipment{}, ErrorRecordNotFound
 	}
 
 	return equipmentDB, nil
 }
 
-func (db *MySQLDB) GetAllEquipments() ([]EquipmentDB, error) {
-	if db.Connection.Db == nil {
-		return []EquipmentDB{}, errorEmptyConnection
-	}
-
+func (db *MySQLDB) GetAllEquipments() ([]Model.Equipment, error) {
 	rows, err := db.Connection.Db.Query("SELECT * FROM unit_db.equipments;")
 	if err != nil {
-		return []EquipmentDB{}, err
+		return []Model.Equipment{}, err
 	}
 	defer rows.Close()
 
-	equipments := []EquipmentDB{}
+	equipments := []Model.Equipment{}
 
 	for rows.Next() {
-		equipmentDB := EquipmentDB{}
+		equipmentDB := Model.Equipment{}
 		err = rows.Scan(&equipmentDB.Id,
 			&equipmentDB.Name,
 			&equipmentDB.LimitOnUnit,
@@ -110,7 +103,7 @@ func (db *MySQLDB) GetAllEquipments() ([]EquipmentDB, error) {
 			&equipmentDB.Ammo,
 			&equipmentDB.Cost)
 		if err != nil {
-			return []EquipmentDB{}, err
+			return []Model.Equipment{}, err
 		}
 		equipments = append(equipments, equipmentDB)
 	}
@@ -118,11 +111,7 @@ func (db *MySQLDB) GetAllEquipments() ([]EquipmentDB, error) {
 	return equipments, nil
 }
 
-func (db *MySQLDB) InsertNewEquipment(equipment EquipmentInputDB) (string, error) {
-	if db.Connection.Db == nil {
-		return "", errorEmptyConnection
-	}
-
+func (db *MySQLDB) InsertNewEquipment(equipment Model.Equipment) (string, error) {
 	_, err := db.Connection.Db.Exec("INSERT INTO `unit_db`.`equipments` 	(`id`, `Name`, `LimitOnUnit`,	`LimitOnTeam`, `SoldarRole`, `Rule`, `Ammo`, `Cost`) VALUES (?, ?, ?, ?, ?, ?, ?, ?);",
 		equipment.Id,
 		equipment.Name,
@@ -140,11 +129,7 @@ func (db *MySQLDB) InsertNewEquipment(equipment EquipmentInputDB) (string, error
 	return equipment.Id, nil
 }
 
-func (db *MySQLDB) UpdateEquipment(equipment EquipmentInputDB) (string, error) {
-	if db.Connection.Db == nil {
-		return "", errorEmptyConnection
-	}
-
+func (db *MySQLDB) UpdateEquipment(equipment Model.Equipment) (string, error) {
 	_, err := db.Connection.Db.Exec("UPDATE `unit_db`.`equipments` SET `Name` = ?, `LimitOnUnit` = ?, `LimitOnTeam` = ?, `SoldarRole` = ?, `Rule` = ?, `Ammo` = ?, `Cost` = ? WHERE id = ?;",
 		equipment.Name,
 		equipment.LimitOnUnit,
@@ -163,10 +148,6 @@ func (db *MySQLDB) UpdateEquipment(equipment EquipmentInputDB) (string, error) {
 }
 
 func (db *MySQLDB) DeleteEquipment(id string) (string, error) {
-	if db.Connection.Db == nil {
-		return "", errorEmptyConnection
-	}
-
 	_, err := db.Connection.Db.Exec("DELETE FROM `unit_db`.`equipments` WHERE id = ?;", id)
 
 	if err != nil {

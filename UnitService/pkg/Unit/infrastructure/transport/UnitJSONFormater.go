@@ -1,11 +1,13 @@
 package transport
 
 import (
-	"UnitService/DB"
 	. "UnitService/pkg/Unit/app"
-	MySQLDB "UnitService/pkg/Unit/infrastructure/DB"
 	"encoding/json"
 )
+
+type JsonFormatter struct {
+
+}
 
 type UnitJSON struct {
 	// ID unit
@@ -43,34 +45,23 @@ type EditUnitJSON struct {
 	AdditionalRule string `json:"additionalRule"`
 }
 
-func SerializationUnit(unitInf UnitInf) (UnitJSON) {
-	unit := UnitJSON{
-		unitInf.Id,
-		unitInf.Name,
-		unitInf.ForceName,
-		unitInf.Hp,
-		unitInf.Initiative,
-		unitInf.Bs,
-		unitInf.Fs,
-		unitInf.AdditionalRule,
-	}
-
-	return unit
+func CreateJSONFormatter() JsonFormatter {
+	return JsonFormatter{}
 }
 
-func SerializationAllUnit(unitsInf []UnitInf) ([]UnitJSON) {
+func (formatter *JsonFormatter) convertAllUnitAppToAllUnitJson(unitsApp []UnitAppData) ([]UnitJSON) {
 	units := []UnitJSON {}
-	for i := 0; i < len(unitsInf); i++ {
-		unitInf := unitsInf[i]
+	for i := 0; i < len(unitsApp); i++ {
+		unitApp := unitsApp[i]
 		unit := UnitJSON{
-			unitInf.Id,
-			unitInf.Name,
-			unitInf.ForceName,
-			unitInf.Hp,
-			unitInf.Initiative,
-			unitInf.Bs,
-			unitInf.Fs,
-			unitInf.AdditionalRule,
+			unitApp.Id,
+			unitApp.Name,
+			unitApp.ForceName,
+			unitApp.Hp,
+			unitApp.Initiative,
+			unitApp.Bs,
+			unitApp.Fs,
+			unitApp.AdditionalRule,
 		}
 
 		units = append(units, unit)
@@ -79,46 +70,42 @@ func SerializationAllUnit(unitsInf []UnitInf) ([]UnitJSON) {
 	return units
 }
 
-func SerializationEditUnit(unitEditJson EditUnitJSON) (UnitEditInf) {
-	unitEdit := UnitEditInf {
-		unitEditJson.Name,
-		unitEditJson.ForceName,
-		unitEditJson.Hp,
-		unitEditJson.Initiative,
-		unitEditJson.Bs,
-		unitEditJson.Fs,
-		unitEditJson.AdditionalRule,
+func (formatter *JsonFormatter) convertUnitAppToAllUnitJson(unitApp UnitAppData) UnitJSON {
+	unit := UnitJSON{
+		unitApp.Id,
+		unitApp.Name,
+		unitApp.ForceName,
+		unitApp.Hp,
+		unitApp.Initiative,
+		unitApp.Bs,
+		unitApp.Fs,
+		unitApp.AdditionalRule,
 	}
 
-	return unitEdit
+	return unit
 }
 
-func GetJSONUnitById(connection *DB.Connection, unitId string) ([]byte, error) {
-	mySQLDB := MySQLDB.CreateMySQLDB(connection)
-	unitInf, err := GetUnitById(&mySQLDB, unitId)
-	if err != nil {
-		return nil, err
+func (formatter *JsonFormatter) convertEditUnitJSONToUnitEditAppData(unit EditUnitJSON) UnitEditAppData {
+	unitApp := UnitEditAppData{
+		unit.Name,
+		unit.ForceName,
+		unit.Hp,
+		unit.Initiative,
+		unit.Bs,
+		unit.Fs,
+		unit.AdditionalRule,
 	}
 
-	units := SerializationUnit(unitInf)
-	b, err := json.Marshal(units)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return b, nil
+	return unitApp
 }
 
-func GetJSONAllUnitById(connection *DB.Connection) ([]byte, error) {
-	mySQLDB := MySQLDB.CreateMySQLDB(connection)
-	allUnits, err := GetAllUnit(&mySQLDB)
-	if err != nil {
-		return nil, err
-	}
+func (formatter *JsonFormatter) ConvertIdToJSON (id string) string {
+	return "\"" + id + "\""
+}
 
-	units := SerializationAllUnit(allUnits)
-	b, err := json.Marshal(units)
+func (formatter *JsonFormatter) ConvertAllUnitAppDataToJSON (units []UnitAppData)  ([]byte, error) {
+	unitsJson := formatter.convertAllUnitAppToAllUnitJson(units)
+	b, err := json.Marshal(unitsJson)
 
 	if err != nil {
 		return nil, err
@@ -127,46 +114,29 @@ func GetJSONAllUnitById(connection *DB.Connection) ([]byte, error) {
 	return b, nil
 }
 
-func AddUnit(connection *DB.Connection, unitJson []byte) (string, error) {
+func (formatter *JsonFormatter) ConvertUnitAppDataToJSON (unit UnitAppData)  ([]byte, error) {
+	unitJson := formatter.convertUnitAppToAllUnitJson(unit)
+	b, err := json.Marshal(unitJson)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return b, nil
+}
+
+func (formatter *JsonFormatter) ConvertJsonToUnitEditAppData (unitJson []byte) (UnitEditAppData, error) {
 	var msg EditUnitJSON
 	err := json.Unmarshal(unitJson, &msg)
 	if err != nil {
-		return "", err
+		return UnitEditAppData{}, err
 	}
 
-	unitEditInf:= SerializationEditUnit(msg)
-	mySQLDB := MySQLDB.CreateMySQLDB(connection)
-	id, err := AddNewUnit(&mySQLDB, unitEditInf)
-	if err != nil {
-		return "", err
-	}
-
-	return id, nil
+	return formatter.convertEditUnitJSONToUnitEditAppData(msg), nil
 }
 
-func UpdateUnit(connection *DB.Connection, id string, unitJson []byte) (string, error) {
-	var msg EditUnitJSON
-	err := json.Unmarshal(unitJson, &msg)
-	if err != nil {
-		return "", err
-	}
 
-	unitEditInf:= SerializationEditUnit(msg)
-	mySQLDB := MySQLDB.CreateMySQLDB(connection)
-	idEdit, err := UpdateUnitInf(&mySQLDB, id, unitEditInf)
-	if err != nil {
-		return "", err
-	}
 
-	return idEdit, nil
-}
 
-func DeleteById(connection *DB.Connection, id string) (string, error) {
-	mySQLDB := MySQLDB.CreateMySQLDB(connection)
-	deleteId, err := DeleteByIdInf(&mySQLDB, id)
-	if err != nil {
-		return "", err
-	}
 
-	return deleteId, nil
-}
+

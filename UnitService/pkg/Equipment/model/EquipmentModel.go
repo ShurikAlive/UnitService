@@ -3,11 +3,11 @@ package EquipmentModel
 import "errors"
 
 var InvalidEquipmentId = errors.New("incorrect id Equipment")
-var InvalidEquipmentName = errors.New("Incorrect name Equipment")
-var InvalidEquipmentLimitOnUnit = errors.New("Incorrect Limit On Unit Equipment")
-var InvalidEquipmentLimitOnTeam = errors.New("Incorrect Limit On Team Equipment")
-var InvalidEquipmentAmmo = errors.New("Incorrect Ammo Equipment")
-var InvalidEquipmentCost = errors.New("Incorrect Cost Equipment")
+var InvalidEquipmentName = errors.New("incorrect name Equipment")
+var InvalidEquipmentLimitOnUnit = errors.New("incorrect Limit On Unit Equipment")
+var InvalidEquipmentLimitOnTeam = errors.New("incorrect Limit On Team Equipment")
+var InvalidEquipmentAmmo = errors.New("incorrect Ammo Equipment")
+var InvalidEquipmentCost = errors.New("incorrect Cost Equipment")
 
 type Equipment struct {
 	// ID equipment
@@ -47,7 +47,7 @@ type EquipmentInputData struct {
 	Cost int32
 }
 
-func ConvertEquipmentInputDataToUnit(equipmentInData EquipmentInputData) Equipment {
+func convertEquipmentInputDataToUnit(equipmentInData EquipmentInputData) Equipment {
 	unit := Equipment{
 		equipmentInData.Id,
 		equipmentInData.Name,
@@ -62,38 +62,86 @@ func ConvertEquipmentInputDataToUnit(equipmentInData EquipmentInputData) Equipme
 	return unit
 }
 
-func IsEmpty(param string) bool {
+func isEmpty(param string) bool {
 	return param == ""
 }
 
-func IsNotNaturalNumber(param int32) bool {
+func isNotNaturalNumber(param int32) bool {
 	return param <= 0
 }
 
+func assertIdEmptiness(id string) error {
+	if isEmpty(id) {
+		return InvalidEquipmentId
+	}
+	return nil
+}
+
+func assertNameEmptiness(name string) error {
+	if isEmpty(name) {
+		return InvalidEquipmentName
+	}
+	return nil
+}
+
+func assertLimitOnUnitEmptiness(limitOnUnit int32) error {
+	if isNotNaturalNumber(limitOnUnit) || (limitOnUnit != -1) {
+		return InvalidEquipmentLimitOnUnit
+	}
+	return nil
+}
+
+func assertLimitOnTeamEmptiness(limitOnTeam int32) error {
+	if isNotNaturalNumber(limitOnTeam) || (limitOnTeam != -1) {
+		return InvalidEquipmentLimitOnTeam
+	}
+	return nil
+}
+
+func assertAmmoEmptiness(ammo int32) error {
+	if isNotNaturalNumber(ammo) || (ammo != -1) {
+		return InvalidEquipmentAmmo
+	}
+	return nil
+}
+
+func assertCostEmptiness(cost int32) error {
+	if isNotNaturalNumber(cost) {
+		return InvalidEquipmentCost
+	}
+	return nil
+}
+
 func CreateEquipment(equipmentInData EquipmentInputData) (Equipment, error) {
-	if IsEmpty(equipmentInData.Id) {
-		return Equipment{}, InvalidEquipmentId
+	err := assertIdEmptiness(equipmentInData.Id)
+	if err != nil {
+		return Equipment{}, err
 	}
 
-	if IsEmpty(equipmentInData.Name) {
-		return Equipment{}, InvalidEquipmentName
+	err = assertNameEmptiness(equipmentInData.Name)
+	if err != nil {
+		return Equipment{}, err
 	}
 
-	if IsNotNaturalNumber(equipmentInData.LimitOnUnit) || (equipmentInData.LimitOnUnit != -1) {
-		return Equipment{}, InvalidEquipmentLimitOnUnit
+	err = assertLimitOnUnitEmptiness(equipmentInData.LimitOnUnit)
+	if err != nil {
+		return Equipment{}, err
 	}
 
-	if IsNotNaturalNumber(equipmentInData.LimitOnTeam) || (equipmentInData.LimitOnTeam != -1) {
-		return Equipment{}, InvalidEquipmentLimitOnTeam
+	err = assertLimitOnTeamEmptiness(equipmentInData.LimitOnTeam)
+	if err != nil {
+		return Equipment{}, err
 	}
 
-	if IsNotNaturalNumber(equipmentInData.Ammo) || (equipmentInData.Ammo != -1) {
-		return Equipment{}, InvalidEquipmentAmmo
+	err = assertAmmoEmptiness(equipmentInData.Ammo)
+	if err != nil {
+		return Equipment{}, err
 	}
 
-	if IsNotNaturalNumber(equipmentInData.Cost) {
-		return Equipment{}, InvalidEquipmentCost
+	err = assertCostEmptiness(equipmentInData.Cost)
+	if err != nil {
+		return Equipment{}, err
 	}
 
-	return ConvertEquipmentInputDataToUnit(equipmentInData), nil
+	return convertEquipmentInputDataToUnit(equipmentInData), nil
 }

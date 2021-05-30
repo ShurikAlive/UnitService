@@ -1,7 +1,10 @@
 package EquipmentTransport
 
 import (
-	"UnitService/DB"
+	"UnitService/cmd/DB"
+	App "UnitService/pkg/Equipment/app"
+	MySqlDB "UnitService/pkg/Equipment/infrastructure/DB"
+	Model "UnitService/pkg/Equipment/model"
 	"fmt"
 	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
@@ -11,27 +14,63 @@ import (
 )
 
 type EquipmentServer struct {
-	connection *DB.Connection
+	app        App.EquipmentApp
+	formatter   JsonFormatter
 }
 
-func CreateEquipmentServer(connection *DB.Connection) (*EquipmentServer) {
+func CreateEquipmentServer(connection *DB.Connection) *EquipmentServer {
+
 	equipmentServer := new(EquipmentServer)
-	equipmentServer.connection = connection
+	db := MySqlDB.CreateMySQLDB(connection)
+	equipmentServer.app = App.CreateEquipmentApp(db)
+	equipmentServer.formatter = CreateJSONFormatter()
 	return equipmentServer
+}
+
+func (s *EquipmentServer) getErrorCode(err error) int {
+	code := http.StatusInternalServerError
+	switch err {
+	case App.ErrorEquipmentNotFound:
+		code = http.StatusBadRequest
+
+	case MySqlDB.ErrorEmptyConnection:
+		code = http.StatusBadRequest
+	case MySqlDB.ErrorInitConnection:
+		code = http.StatusBadRequest
+	case MySqlDB.ErrorRecordNotFound:
+		code = http.StatusBadRequest
+
+	case Model.InvalidEquipmentCost:
+		code = http.StatusBadRequest
+	case Model.InvalidEquipmentAmmo:
+		code = http.StatusBadRequest
+	case Model.InvalidEquipmentLimitOnTeam:
+		code = http.StatusBadRequest
+	case Model.InvalidEquipmentId:
+		code = http.StatusBadRequest
+	case Model.InvalidEquipmentLimitOnUnit:
+		code = http.StatusBadRequest
+	case Model.InvalidEquipmentName:
+		code = http.StatusBadRequest
+	}
+
+	return code
 }
 
 func (s *EquipmentServer) EquipmentEquipmentIdDelete(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	id := vars["unitId"]
+	id := vars["equipmentId"]
 
-	deleteId, err := DeleteById(s.connection, id)
+	deleteId, err := s.app.DeleteByIdApp(id)
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, err.Error(), s.getErrorCode(err))
 		return
 	}
 
-	fmt.Fprintf(w,"\"" + deleteId + "\"")
+	idJSON:= s.formatter.ConvertIdToJSON(deleteId)
+
+	fmt.Fprintf(w,idJSON)
 
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.WriteHeader(http.StatusOK)
@@ -39,9 +78,16 @@ func (s *EquipmentServer) EquipmentEquipmentIdDelete(w http.ResponseWriter, r *h
 
 func (s *EquipmentServer) EquipmentEquipmentIdGet(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	id := vars["unitId"]
+	id := vars["equipmentId"]
 
-	b, err := GetJSONEquipmentById(s.connection, id)
+	equipment, err:= s.app.GetEquipmentById(id)
+
+	if err != nil {
+		http.Error(w, err.Error(), s.getErrorCode(err))
+		return
+	}
+
+	b, err := s.formatter.ConvertEquipmentAppDataToJSON(equipment)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -53,7 +99,7 @@ func (s *EquipmentServer) EquipmentEquipmentIdGet(w http.ResponseWriter, r *http
 
 func (s *EquipmentServer) EquipmentEquipmentIdPut(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	id := vars["unitId"]
+	id := vars["equipmentId"]
 
 	b, err := ioutil.ReadAll(r.Body)
 	if err != nil {
@@ -63,20 +109,36 @@ func (s *EquipmentServer) EquipmentEquipmentIdPut(w http.ResponseWriter, r *http
 
 	defer r.Body.Close()
 
-	updateId, err := UpdateEquipment(s.connection, id, b)
+	equipmentEdit, err := s.formatter.ConvertJsonToEquipmentEditAppData(b)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	fmt.Fprintf(w,"\"" + updateId + "\"")
+	updateId, err := s.app.UpdateEquipmentApp(id, equipmentEdit)
+
+	if err != nil {
+		http.Error(w, err.Error(), s.getErrorCode(err))
+		return
+	}
+
+	idJSON:= s.formatter.ConvertIdToJSON(updateId)
+
+	fmt.Fprintf(w,idJSON)
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.WriteHeader(http.StatusOK)
 }
 
 func (s *EquipmentServer) EquipmentGet(w http.ResponseWriter, r *http.Request) {
-	b, err := GetJSONAllEquipment(s.connection)
+	equipments, err:= s.app.GetAllEquipment()
+
+	if err != nil {
+		http.Error(w, err.Error(), s.getErrorCode(err))
+		return
+	}
+
+	b, err := s.formatter.ConvertAllEquipmentAppDataToJSON(equipments)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -95,14 +157,23 @@ func (s *EquipmentServer) EquipmentPost(w http.ResponseWriter, r *http.Request) 
 
 	defer r.Body.Close()
 
-	id, err := AddEquipment(s.connection, b)
+	equipmentEdit, err := s.formatter.ConvertJsonToEquipmentEditAppData(b)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	fmt.Fprintf(w,"\"" + id + "\"")
+	id, err := s.app.AddNewEquipment(equipmentEdit)
+
+	if err != nil {
+		http.Error(w, err.Error(), s.getErrorCode(err))
+		return
+	}
+
+	idJSON:= s.formatter.ConvertIdToJSON(id)
+
+	fmt.Fprintf(w,idJSON)
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.WriteHeader(http.StatusOK)
 }
