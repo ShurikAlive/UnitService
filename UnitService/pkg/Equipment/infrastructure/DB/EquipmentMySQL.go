@@ -1,9 +1,9 @@
 package EquipmentMySQLDB
 
 import (
-	"UnitService/cmd/DB"
-	Model "UnitService/pkg/Equipment/model"
-	App "UnitService/pkg/Equipment/app"
+	App "UnitService/pkg/equipment/app"
+	Model "UnitService/pkg/equipment/model"
+	DB "UnitService/pkg/common/infrastructure"
 	"errors"
 )
 
@@ -15,7 +15,7 @@ type MySQLDB struct {
 	Connection *DB.Connection
 }
 
-func CreateMySQLDB(connection *DB.Connection) App.IEquipmentDB {
+func CreateMySQLDB(connection *DB.Connection) App.EquipmentRepository {
 	if connection.Db == nil {
 		return nil
 	}
@@ -23,7 +23,7 @@ func CreateMySQLDB(connection *DB.Connection) App.IEquipmentDB {
 }
 
 
-func (db *MySQLDB) GetEquipmentInDBById(id string) (Model.Equipment, error) {
+func (db *MySQLDB) GetEquipmentById(id string) (Model.Equipment, error) {
 	query := "SELECT * FROM unit_db.equipments where id = '" + id + "';";
 	rows, err := db.Connection.Db.Query(query)
 	if err != nil {
@@ -53,7 +53,7 @@ func (db *MySQLDB) GetEquipmentInDBById(id string) (Model.Equipment, error) {
 	return equipmentDB, nil
 }
 
-func (db *MySQLDB) GetEquipmentInDBByRequiredParameters(equipmentParams App.RequiredParameters) (Model.Equipment, error) {
+func (db *MySQLDB) GetEquipmentByRequiredParameters(equipmentParams App.RequiredParameters) (Model.Equipment, error) {
 	query := "SELECT * FROM unit_db.equipments where name = '" + equipmentParams.Name + "' AND Cost = " + string(equipmentParams.Cost) + ";";
 	rows, err := db.Connection.Db.Query(query)
 	if err != nil {

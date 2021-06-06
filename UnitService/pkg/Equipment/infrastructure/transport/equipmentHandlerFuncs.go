@@ -1,10 +1,10 @@
 package EquipmentTransport
 
 import (
-	"UnitService/cmd/DB"
-	App "UnitService/pkg/Equipment/app"
-	MySqlDB "UnitService/pkg/Equipment/infrastructure/DB"
-	Model "UnitService/pkg/Equipment/model"
+	DB "UnitService/pkg/common/infrastructure"
+	App "UnitService/pkg/equipment/app"
+	MySqlDB "UnitService/pkg/equipment/infrastructure/db"
+	Model "UnitService/pkg/equipment/model"
 	"fmt"
 	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
@@ -57,13 +57,14 @@ func (s *EquipmentServer) getErrorCode(err error) int {
 	return code
 }
 
-func (s *EquipmentServer) EquipmentEquipmentIdDelete(w http.ResponseWriter, r *http.Request) {
+func (s *EquipmentServer) EquipmentIdDelete(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id := vars["equipmentId"]
 
 	deleteId, err := s.app.DeleteByIdApp(id)
 
 	if err != nil {
+		log.Print(err.Error())
 		http.Error(w, err.Error(), s.getErrorCode(err))
 		return
 	}
@@ -76,13 +77,14 @@ func (s *EquipmentServer) EquipmentEquipmentIdDelete(w http.ResponseWriter, r *h
 	w.WriteHeader(http.StatusOK)
 }
 
-func (s *EquipmentServer) EquipmentEquipmentIdGet(w http.ResponseWriter, r *http.Request) {
+func (s *EquipmentServer) EquipmentIdGet(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id := vars["equipmentId"]
 
 	equipment, err:= s.app.GetEquipmentById(id)
 
 	if err != nil {
+		log.Print(err.Error())
 		http.Error(w, err.Error(), s.getErrorCode(err))
 		return
 	}
@@ -90,6 +92,7 @@ func (s *EquipmentServer) EquipmentEquipmentIdGet(w http.ResponseWriter, r *http
 	b, err := s.formatter.ConvertEquipmentAppDataToJSON(equipment)
 
 	if err != nil {
+		log.Print(err.Error())
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -97,12 +100,13 @@ func (s *EquipmentServer) EquipmentEquipmentIdGet(w http.ResponseWriter, r *http
 	JSONResponse(w, b)
 }
 
-func (s *EquipmentServer) EquipmentEquipmentIdPut(w http.ResponseWriter, r *http.Request) {
+func (s *EquipmentServer) EquipmentIdPut(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id := vars["equipmentId"]
 
 	b, err := ioutil.ReadAll(r.Body)
 	if err != nil {
+		log.Print(err.Error())
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -112,6 +116,7 @@ func (s *EquipmentServer) EquipmentEquipmentIdPut(w http.ResponseWriter, r *http
 	equipmentEdit, err := s.formatter.ConvertJsonToEquipmentEditAppData(b)
 
 	if err != nil {
+		log.Print(err.Error())
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -119,6 +124,7 @@ func (s *EquipmentServer) EquipmentEquipmentIdPut(w http.ResponseWriter, r *http
 	updateId, err := s.app.UpdateEquipmentApp(id, equipmentEdit)
 
 	if err != nil {
+		log.Print(err.Error())
 		http.Error(w, err.Error(), s.getErrorCode(err))
 		return
 	}
@@ -134,6 +140,7 @@ func (s *EquipmentServer) EquipmentGet(w http.ResponseWriter, r *http.Request) {
 	equipments, err:= s.app.GetAllEquipment()
 
 	if err != nil {
+		log.Print(err.Error())
 		http.Error(w, err.Error(), s.getErrorCode(err))
 		return
 	}
@@ -141,6 +148,7 @@ func (s *EquipmentServer) EquipmentGet(w http.ResponseWriter, r *http.Request) {
 	b, err := s.formatter.ConvertAllEquipmentAppDataToJSON(equipments)
 
 	if err != nil {
+		log.Print(err.Error())
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -151,6 +159,7 @@ func (s *EquipmentServer) EquipmentGet(w http.ResponseWriter, r *http.Request) {
 func (s *EquipmentServer) EquipmentPost(w http.ResponseWriter, r *http.Request) {
 	b, err := ioutil.ReadAll(r.Body)
 	if err != nil {
+		log.Print(err.Error())
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -160,6 +169,7 @@ func (s *EquipmentServer) EquipmentPost(w http.ResponseWriter, r *http.Request) 
 	equipmentEdit, err := s.formatter.ConvertJsonToEquipmentEditAppData(b)
 
 	if err != nil {
+		log.Print(err.Error())
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -167,6 +177,7 @@ func (s *EquipmentServer) EquipmentPost(w http.ResponseWriter, r *http.Request) 
 	id, err := s.app.AddNewEquipment(equipmentEdit)
 
 	if err != nil {
+		log.Print(err.Error())
 		http.Error(w, err.Error(), s.getErrorCode(err))
 		return
 	}

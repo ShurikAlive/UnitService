@@ -58,28 +58,19 @@
     <property name="settings.editor.selected.configurable" value="go.vgo" />
   </component>
   <component name="RecentsManager">
-    <key name="MoveFile.RECENT_KEYS">
-      <recent name="C:\Users\Alexandr\go\src\UnitService" />
-      <recent name="C:\Users\Alexandr\go\src\UnitService\cmd" />
-      <recent name="C:\Users\Alexandr\go\src\UnitService\pkg\Unit\infrastructure\transport" />
-      <recent name="C:\Users\Alexandr\go\src\UnitService\pkg\Unit\infrastructure\DB" />
-      <recent name="C:\Users\Alexandr\go\src\UnitService\pkg\Unit\infrastructure" />
-    </key>
     <key name="CopyFile.RECENT_KEYS">
       <recent name="C:\Users\Alexandr\go\src\UnitService\pkg\Unit" />
       <recent name="C:\Users\Alexandr\go\src\UnitService" />
     </key>
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Users\Alexandr\go\src\UnitService\pkg\common\infrastructure" />
+      <recent name="C:\Users\Alexandr\go\src\UnitService" />
+      <recent name="C:\Users\Alexandr\go\src\UnitService\cmd" />
+      <recent name="C:\Users\Alexandr\go\src\UnitService\pkg\Unit\infrastructure\transport" />
+      <recent name="C:\Users\Alexandr\go\src\UnitService\pkg\Unit\infrastructure\DB" />
+    </key>
   </component>
   <component name="RunManager" selected="Go Build.go build UnitService/cmd">
-    <configuration name="go build UnitService" type="GoApplicationRunConfiguration" factoryName="Go Application" temporary="true" nameIsGenerated="true">
-      <module name="UnitService" />
-      <working_directory value="$PROJECT_DIR$/" />
-      <kind value="PACKAGE" />
-      <filePath value="$PROJECT_DIR$/main.go" />
-      <package value="UnitService" />
-      <directory value="$PROJECT_DIR$/" />
-      <method v="2" />
-    </configuration>
     <configuration name="go build UnitService/cmd" type="GoApplicationRunConfiguration" factoryName="Go Application" temporary="true" nameIsGenerated="true">
       <module name="UnitService" />
       <working_directory value="$PROJECT_DIR$" />
@@ -89,10 +80,55 @@
       <directory value="$PROJECT_DIR$/" />
       <method v="2" />
     </configuration>
+    <configuration name="TestCreateEquipmentInvalidCost in UnitService/pkg/equipment/model" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+      <module name="UnitService" />
+      <working_directory value="$PROJECT_DIR$/pkg/equipment/model" />
+      <framework value="gotest" />
+      <kind value="PACKAGE" />
+      <package value="UnitService/pkg/equipment/model" />
+      <directory value="$PROJECT_DIR$/" />
+      <filePath value="$PROJECT_DIR$/" />
+      <pattern value="^TestCreateEquipmentInvalidCost$" />
+      <method v="2" />
+    </configuration>
+    <configuration name="TestSuccessCreateEquipment in UnitService/pkg/equipment/model" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+      <module name="UnitService" />
+      <working_directory value="$PROJECT_DIR$/pkg/equipment/model" />
+      <framework value="gotest" />
+      <kind value="PACKAGE" />
+      <package value="UnitService/pkg/equipment/model" />
+      <directory value="$PROJECT_DIR$/" />
+      <filePath value="$PROJECT_DIR$/" />
+      <pattern value="^TestSuccessCreateEquipment$" />
+      <method v="2" />
+    </configuration>
+    <configuration name="equipmentModel_test.go" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+      <module name="UnitService" />
+      <working_directory value="$PROJECT_DIR$/pkg/equipment/model" />
+      <framework value="gotest" />
+      <kind value="FILE" />
+      <package value="UnitService" />
+      <directory value="$PROJECT_DIR$/" />
+      <filePath value="$PROJECT_DIR$/pkg/equipment/model/equipmentModel_test.go" />
+      <method v="2" />
+    </configuration>
+    <configuration name="unitModel_test.go" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+      <module name="UnitService" />
+      <working_directory value="$PROJECT_DIR$/pkg/unit/model" />
+      <framework value="gotest" />
+      <kind value="FILE" />
+      <package value="UnitService" />
+      <directory value="$PROJECT_DIR$/" />
+      <filePath value="$PROJECT_DIR$/pkg/unit/model/unitModel_test.go" />
+      <method v="2" />
+    </configuration>
     <recent_temporary>
       <list>
         <item itemvalue="Go Build.go build UnitService/cmd" />
-        <item itemvalue="Go Build.go build UnitService" />
+        <item itemvalue="Go Test.equipmentModel_test.go" />
+        <item itemvalue="Go Test.TestSuccessCreateEquipment in UnitService/pkg/equipment/model" />
+        <item itemvalue="Go Test.TestCreateEquipmentInvalidCost in UnitService/pkg/equipment/model" />
+        <item itemvalue="Go Test.unitModel_test.go" />
       </list>
     </recent_temporary>
   </component>
@@ -134,10 +170,10 @@
       <screen x="0" y="0" width="1536" height="824" />
     </state>
     <state x="361" y="70" key="#SQL_Dialects/0.0.1536.824@0.0.1536.824" timestamp="1622236834093" />
-    <state x="223" y="67" key="#com.intellij.execution.impl.EditConfigurationsDialog" timestamp="1622384668039">
+    <state x="223" y="67" key="#com.intellij.execution.impl.EditConfigurationsDialog" timestamp="1622971102833">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state x="223" y="67" key="#com.intellij.execution.impl.EditConfigurationsDialog/0.0.1536.824@0.0.1536.824" timestamp="1622384668039" />
+    <state x="223" y="67" key="#com.intellij.execution.impl.EditConfigurationsDialog/0.0.1536.824@0.0.1536.824" timestamp="1622971102833" />
     <state x="498" y="191" key="#com.intellij.ide.scriptingContext.ui.PerFileMappingsDialogWrapper" timestamp="1620208831528">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
@@ -150,38 +186,38 @@
       <screen x="0" y="0" width="1536" height="824" />
     </state>
     <state x="549" y="166" key="FileChooserDialogImpl/0.0.1536.824@0.0.1536.824" timestamp="1622236833397" />
-    <state width="746" height="190" key="GridCell.Tab.0.bottom" timestamp="1622319265354">
+    <state width="746" height="190" key="GridCell.Tab.0.bottom" timestamp="1622980105107">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state width="746" height="190" key="GridCell.Tab.0.bottom/0.0.1536.824@0.0.1536.824" timestamp="1622319265354" />
-    <state width="746" height="190" key="GridCell.Tab.0.center" timestamp="1622319265353">
+    <state width="746" height="190" key="GridCell.Tab.0.bottom/0.0.1536.824@0.0.1536.824" timestamp="1622980105107" />
+    <state width="746" height="190" key="GridCell.Tab.0.center" timestamp="1622980105107">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state width="746" height="190" key="GridCell.Tab.0.center/0.0.1536.824@0.0.1536.824" timestamp="1622319265353" />
-    <state width="746" height="190" key="GridCell.Tab.0.left" timestamp="1622319265353">
+    <state width="746" height="190" key="GridCell.Tab.0.center/0.0.1536.824@0.0.1536.824" timestamp="1622980105107" />
+    <state width="746" height="190" key="GridCell.Tab.0.left" timestamp="1622980105107">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state width="746" height="190" key="GridCell.Tab.0.left/0.0.1536.824@0.0.1536.824" timestamp="1622319265353" />
-    <state width="746" height="190" key="GridCell.Tab.0.right" timestamp="1622319265353">
+    <state width="746" height="190" key="GridCell.Tab.0.left/0.0.1536.824@0.0.1536.824" timestamp="1622980105107" />
+    <state width="746" height="190" key="GridCell.Tab.0.right" timestamp="1622980105107">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state width="746" height="190" key="GridCell.Tab.0.right/0.0.1536.824@0.0.1536.824" timestamp="1622319265353" />
-    <state width="746" height="205" key="GridCell.Tab.1.bottom" timestamp="1621891694898">
+    <state width="746" height="190" key="GridCell.Tab.0.right/0.0.1536.824@0.0.1536.824" timestamp="1622980105107" />
+    <state width="746" height="326" key="GridCell.Tab.1.bottom" timestamp="1622920236942">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state width="746" height="205" key="GridCell.Tab.1.bottom/0.0.1536.824@0.0.1536.824" timestamp="1621891694898" />
-    <state width="746" height="205" key="GridCell.Tab.1.center" timestamp="1621891694898">
+    <state width="746" height="326" key="GridCell.Tab.1.bottom/0.0.1536.824@0.0.1536.824" timestamp="1622920236942" />
+    <state width="746" height="326" key="GridCell.Tab.1.center" timestamp="1622920236942">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state width="746" height="205" key="GridCell.Tab.1.center/0.0.1536.824@0.0.1536.824" timestamp="1621891694898" />
-    <state width="746" height="205" key="GridCell.Tab.1.left" timestamp="1621891694898">
+    <state width="746" height="326" key="GridCell.Tab.1.center/0.0.1536.824@0.0.1536.824" timestamp="1622920236942" />
+    <state width="746" height="326" key="GridCell.Tab.1.left" timestamp="1622920236942">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state width="746" height="205" key="GridCell.Tab.1.left/0.0.1536.824@0.0.1536.824" timestamp="1621891694898" />
-    <state width="746" height="205" key="GridCell.Tab.1.right" timestamp="1621891694898">
+    <state width="746" height="326" key="GridCell.Tab.1.left/0.0.1536.824@0.0.1536.824" timestamp="1622920236942" />
+    <state width="746" height="326" key="GridCell.Tab.1.right" timestamp="1622920236942">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state width="746" height="205" key="GridCell.Tab.1.right/0.0.1536.824@0.0.1536.824" timestamp="1621891694898" />
+    <state width="746" height="326" key="GridCell.Tab.1.right/0.0.1536.824@0.0.1536.824" timestamp="1622920236942" />
     <state x="277" y="54" key="SettingsEditor" timestamp="1622317690286">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
@@ -194,9 +230,20 @@
       <screen x="0" y="0" width="1536" height="824" />
     </state>
     <state x="398" y="114" width="740" height="596" key="find.popup/0.0.1536.824@0.0.1536.824" timestamp="1622052665855" />
+    <state x="511" y="32" key="refactoring.ChangeSignatureDialog" timestamp="1622900043788">
+      <screen x="0" y="0" width="1536" height="824" />
+    </state>
+    <state x="511" y="32" key="refactoring.ChangeSignatureDialog/0.0.1536.824@0.0.1536.824" timestamp="1622900043788" />
     <state x="431" y="145" width="672" height="678" key="search.everywhere.popup" timestamp="1621890385637">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
     <state x="431" y="145" width="672" height="678" key="search.everywhere.popup/0.0.1536.824@0.0.1536.824" timestamp="1621890385637" />
+    <state x="491" y="324" key="vcs.readOnlyHandler.ReadOnlyStatusDialog" timestamp="1622920273817">
+      <screen x="0" y="0" width="1536" height="824" />
+    </state>
+    <state x="491" y="324" key="vcs.readOnlyHandler.ReadOnlyStatusDialog/0.0.1536.824@0.0.1536.824" timestamp="1622920273817" />
+  </component>
+  <component name="com.intellij.coverage.CoverageDataManagerImpl">
+    <SUITE FILE_PATH="coverage/UnitService$TestSuccessCreateEquipment_in_UnitService_pkg_equipment_model.out" NAME="TestSuccessCreateEquipment in UnitService/pkg/equipment/model Coverage Results" MODIFIED="1622902588355" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
   </component>
 </project>

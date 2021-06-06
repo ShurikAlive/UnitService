@@ -1,16 +1,17 @@
 package EquipmentApp
 
 import (
-	Model "UnitService/pkg/Equipment/model"
+	Model "UnitService/pkg/equipment/model"
 	"errors"
 	uuid "github.com/nu7hatch/gouuid"
+	"sync"
 )
 
 var ErrorEquipmentNotFound = errors.New("equipment id not found!")
 
-type IEquipmentDB interface {
-	GetEquipmentInDBById(id string) (Model.Equipment, error)
-	GetEquipmentInDBByRequiredParameters(equipmentParams RequiredParameters) (Model.Equipment, error)
+type EquipmentRepository interface {
+	GetEquipmentById(id string) (Model.Equipment, error)
+	GetEquipmentByRequiredParameters(equipmentParams RequiredParameters) (Model.Equipment, error)
 	GetAllEquipments() ([]Model.Equipment, error)
 	InsertNewEquipment(equipment Model.Equipment) (string, error)
 	UpdateEquipment(equipment Model.Equipment) (string, error)
@@ -18,11 +19,12 @@ type IEquipmentDB interface {
 }
 
 type EquipmentApp struct {
-	db IEquipmentDB
+	db EquipmentRepository
+	mutex *sync.Mutex
 }
 
 type RequiredParameters struct {
-	// FULL NAME unit
+	// FULL NAME equipment
 	Name string
 	// cost equipment in game points
 	Cost int32
@@ -64,7 +66,7 @@ type EditEquipmentAppData struct {
 	Cost int32
 }
 
-func GenerateId() (string, error) {
+func generateId() (string, error) {
 	u, err := uuid.NewV4()
 	if err != nil {
 		return "", err
@@ -74,11 +76,12 @@ func GenerateId() (string, error) {
 	return id, nil
 }
 
-func CreateEquipmentApp(db IEquipmentDB) EquipmentApp {
-	return EquipmentApp{db}
+func CreateEquipmentApp(db EquipmentRepository) EquipmentApp {
+	var mutex = &sync.Mutex{}
+	return EquipmentApp{db, mutex}
 }
 
-func (app *EquipmentApp) convertEditEquipmentAppToEquipmentApp (id string, equipmentEdit EditEquipmentAppData) EquipmentAppData {
+func (app *EquipmentApp) createEquipmentAppById (id string, equipmentEdit EditEquipmentAppData) EquipmentAppData {
 	equipment := EquipmentAppData {
 		Id:          id,
 		Name:        equipmentEdit.Name,
@@ -93,7 +96,7 @@ func (app *EquipmentApp) convertEditEquipmentAppToEquipmentApp (id string, equip
 	return equipment
 }
 
-func (app *EquipmentApp) convertEquipmentAppToEquipmentInputData(equipment EquipmentAppData) Model.EquipmentInputData {
+func (app *EquipmentApp) createEquipmentInputData(equipment EquipmentAppData) Model.EquipmentInputData {
 	equipmentInput := Model.EquipmentInputData {
 		Id:          equipment.Id,
 		Name:        equipment.Name,
@@ -108,7 +111,7 @@ func (app *EquipmentApp) convertEquipmentAppToEquipmentInputData(equipment Equip
 	return equipmentInput
 }
 
-func (app *EquipmentApp) convertEquipmentToEquipmentApp(equipment Model.Equipment) EquipmentAppData {
+func (app *EquipmentApp) createEquipmentApp(equipment Model.Equipment) EquipmentAppData {
 	equipmentApp := EquipmentAppData {
 		Id:          equipment.Id,
 		Name:        equipment.Name,
@@ -124,7 +127,7 @@ func (app *EquipmentApp) convertEquipmentToEquipmentApp(equipment Model.Equipmen
 }
 
 func (app *EquipmentApp) equipmentIdExist(id string) bool {
-	equipmentFromDB, err := app.db.GetEquipmentInDBById(id)
+	equipmentFromDB, err := app.db.GetEquipmentById(id)
 	if err != nil {
 		return false
 	}
@@ -136,7 +139,7 @@ func (app *EquipmentApp) equipmentIdExist(id string) bool {
 	return true
 }
 
-func (app *EquipmentApp) convertEquipmentToEquipmentRequiredParameters(equipment Model.Equipment) RequiredParameters {
+func (app *EquipmentApp) createEquipmentRequiredParameters(equipment Model.Equipment) RequiredParameters {
 	requiredParameters := RequiredParameters {
 		equipment.Name,
 		equipment.Cost,
@@ -146,13 +149,13 @@ func (app *EquipmentApp) convertEquipmentToEquipmentRequiredParameters(equipment
 }
 
 func (app *EquipmentApp) EquipmentExist(equipment Model.Equipment) bool {
-	equipmentInputDB := app.convertEquipmentToEquipmentRequiredParameters(equipment)
-	unitFromDB, err := app.db.GetEquipmentInDBByRequiredParameters(equipmentInputDB)
+	equipmentInputDB := app.createEquipmentRequiredParameters(equipment)
+	equipmentFromDB, err := app.db.GetEquipmentByRequiredParameters(equipmentInputDB)
 	if err != nil {
 		return false
 	}
 
-	if unitFromDB.Id == "" {
+	if equipmentFromDB.Id == "" {
 		return false
 	}
 
@@ -171,7 +174,9 @@ func (app *EquipmentApp) DeleteByIdApp(id string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	app.mutex.Lock()
 	deleteId, err := app.db.DeleteEquipment(id)
+	app.mutex.Unlock()
 	if err != nil {
 		return "", err
 	}
@@ -180,11 +185,11 @@ func (app *EquipmentApp) DeleteByIdApp(id string) (string, error) {
 
 
 func (app *EquipmentApp) GetEquipmentById(id string) (EquipmentAppData, error) {
-	equipmentFromDB, err := app.db.GetEquipmentInDBById(id)
+	equipmentFromDB, err := app.db.GetEquipmentById(id)
 	if err != nil {
 		return EquipmentAppData {}, err
 	}
-	equipmentApp := app.convertEquipmentToEquipmentApp(equipmentFromDB)
+	equipmentApp := app.createEquipmentApp(equipmentFromDB)
 	return equipmentApp, nil
 }
 
@@ -196,12 +201,12 @@ func (app *EquipmentApp) assertEquipmentExist(equipment Model.Equipment) error {
 }
 
 func (app *EquipmentApp) AddNewEquipment(equipmentInfo EditEquipmentAppData) (string, error) {
-	id, err := GenerateId()
+	id, err := generateId()
 	if err != nil {
 		return "", err
 	}
-	equipmentApp := app.convertEditEquipmentAppToEquipmentApp(id, equipmentInfo)
-	equipmentInData := app.convertEquipmentAppToEquipmentInputData(equipmentApp)
+	equipmentApp := app.createEquipmentAppById(id, equipmentInfo)
+	equipmentInData := app.createEquipmentInputData(equipmentApp)
 	equipment, err := Model.CreateEquipment(equipmentInData)
 	if err != nil {
 		return "", err
@@ -210,7 +215,9 @@ func (app *EquipmentApp) AddNewEquipment(equipmentInfo EditEquipmentAppData) (st
 	if err != nil {
 		return "", err
 	}
+	app.mutex.Lock()
 	insertedId, err := app.db.InsertNewEquipment(equipment)
+	app.mutex.Unlock()
 	if err != nil {
 		return "", err
 	}
@@ -218,8 +225,8 @@ func (app *EquipmentApp) AddNewEquipment(equipmentInfo EditEquipmentAppData) (st
 }
 
 func (app *EquipmentApp) UpdateEquipmentApp(id string, equipmentInfo EditEquipmentAppData) (string, error) {
-	equipmentApp := app.convertEditEquipmentAppToEquipmentApp(id, equipmentInfo)
-	equipmentInData := app.convertEquipmentAppToEquipmentInputData(equipmentApp)
+	equipmentApp := app.createEquipmentAppById(id, equipmentInfo)
+	equipmentInData := app.createEquipmentInputData(equipmentApp)
 	equipment, err := Model.CreateEquipment(equipmentInData)
 	if err != nil {
 		return "", err
@@ -228,7 +235,9 @@ func (app *EquipmentApp) UpdateEquipmentApp(id string, equipmentInfo EditEquipme
 	if err != nil {
 		return "", err
 	}
+	app.mutex.Lock()
 	updateId, err := app.db.UpdateEquipment(equipment)
+	app.mutex.Unlock()
 	if err != nil {
 		return "", err
 	}
@@ -244,7 +253,7 @@ func (app *EquipmentApp) GetAllEquipment() ([]EquipmentAppData, error) {
 
 	for i := 0; i < len(equipmentsDB); i++ {
 		equipmentDB := equipmentsDB[i]
-		equipmentApp := app.convertEquipmentToEquipmentApp(equipmentDB)
+		equipmentApp := app.createEquipmentApp(equipmentDB)
 		equipments = append(equipments, equipmentApp)
 	}
 

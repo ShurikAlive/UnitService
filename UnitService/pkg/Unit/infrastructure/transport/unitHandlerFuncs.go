@@ -1,10 +1,10 @@
 package transport
 
 import (
-	"UnitService/cmd/DB"
-	App "UnitService/pkg/Unit/app"
-	MySqlDB "UnitService/pkg/Unit/infrastructure/DB"
-	Model "UnitService/pkg/Unit/model"
+	App "UnitService/pkg/unit/app"
+	MySqlDB "UnitService/pkg/unit/infrastructure/db"
+	Model "UnitService/pkg/unit/model"
+	DB "UnitService/pkg/common/infrastructure"
 	"fmt"
 	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
@@ -64,6 +64,7 @@ func (s *UnitServer) UnitGet(w http.ResponseWriter, r *http.Request) {
 	units, err:= s.app.GetAllUnit()
 
 	if err != nil {
+		log.Print(err.Error())
 		http.Error(w, err.Error(), s.getErrorCode(err))
 		return
 	}
@@ -71,6 +72,7 @@ func (s *UnitServer) UnitGet(w http.ResponseWriter, r *http.Request) {
 	b, err := s.formatter.ConvertAllUnitAppDataToJSON(units)
 
 	if err != nil {
+		log.Print(err.Error())
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -81,6 +83,7 @@ func (s *UnitServer) UnitGet(w http.ResponseWriter, r *http.Request) {
 func (s *UnitServer) UnitPost(w http.ResponseWriter, r *http.Request) {
 	b, err := ioutil.ReadAll(r.Body)
 	if err != nil {
+		log.Print(err.Error())
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -90,6 +93,7 @@ func (s *UnitServer) UnitPost(w http.ResponseWriter, r *http.Request) {
 	unitEdit, err := s.formatter.ConvertJsonToUnitEditAppData(b)
 
 	if err != nil {
+		log.Print(err.Error())
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -97,6 +101,7 @@ func (s *UnitServer) UnitPost(w http.ResponseWriter, r *http.Request) {
 	id, err := s.app.AddNewUnit(unitEdit)
 
 	if err != nil {
+		log.Print(err.Error())
 		http.Error(w, err.Error(), s.getErrorCode(err))
 		return
 	}
@@ -108,13 +113,14 @@ func (s *UnitServer) UnitPost(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-func (s *UnitServer) UnitUnitIdDelete(w http.ResponseWriter, r *http.Request) {
+func (s *UnitServer) UnitIdDelete(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id := vars["unitId"]
 
 	deleteId, err := s.app.DeleteById(id)
 
 	if err != nil {
+		log.Print(err.Error())
 		http.Error(w, err.Error(), s.getErrorCode(err))
 		return
 	}
@@ -127,13 +133,14 @@ func (s *UnitServer) UnitUnitIdDelete(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-func (s *UnitServer) UnitUnitIdGet(w http.ResponseWriter, r *http.Request) {
+func (s *UnitServer) UnitIdGet(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id := vars["unitId"]
 
 	unit, err:= s.app.GetUnitById(id)
 
 	if err != nil {
+		log.Print(err.Error())
 		http.Error(w, err.Error(), s.getErrorCode(err))
 		return
 	}
@@ -141,6 +148,7 @@ func (s *UnitServer) UnitUnitIdGet(w http.ResponseWriter, r *http.Request) {
 	b, err := s.formatter.ConvertUnitAppDataToJSON(unit)
 
 	if err != nil {
+		log.Print(err.Error())
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -148,12 +156,13 @@ func (s *UnitServer) UnitUnitIdGet(w http.ResponseWriter, r *http.Request) {
 	JSONResponse(w, b)
 }
 
-func (s *UnitServer) UnitUnitIdPut(w http.ResponseWriter, r *http.Request) {
+func (s *UnitServer) UnitIdPut(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id := vars["unitId"]
 
 	b, err := ioutil.ReadAll(r.Body)
 	if err != nil {
+		log.Print(err.Error())
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -163,6 +172,7 @@ func (s *UnitServer) UnitUnitIdPut(w http.ResponseWriter, r *http.Request) {
 	unitEdit, err := s.formatter.ConvertJsonToUnitEditAppData(b)
 
 	if err != nil {
+		log.Print(err.Error())
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -170,6 +180,7 @@ func (s *UnitServer) UnitUnitIdPut(w http.ResponseWriter, r *http.Request) {
 	updateId, err := s.app.UpdateUnit(id, unitEdit)
 
 	if err != nil {
+		log.Print(err.Error())
 		http.Error(w, err.Error(), s.getErrorCode(err))
 		return
 	}

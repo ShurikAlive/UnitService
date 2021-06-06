@@ -1,17 +1,18 @@
 package UnitApp
 
 import (
-	. "UnitService/pkg/Unit/model"
+	. "UnitService/pkg/unit/model"
 	"errors"
 	uuid "github.com/nu7hatch/gouuid"
+	"sync"
 )
 
 var ErrorUnitExist = errors.New("this unit Exist!")
 var ErrorUnitIdExist = errors.New("unit id not found!")
 
-type IUnitDB interface {
-	GetUnitInDBById(id string) (Unit, error)
-	GetUnitInDBByRequiredParameters(unitParams RequiredParameters) (Unit, error)
+type UnitRepository interface {
+	GetUnitById(id string) (Unit, error)
+	GetUnitByRequiredParameters(unitParams RequiredParameters) (Unit, error)
 	GetAllUnits() ([]Unit, error)
 	InsertNewUnit(unit Unit) (string, error)
 	UpdateUnit(unit Unit) (string, error)
@@ -19,7 +20,8 @@ type IUnitDB interface {
 }
 
 type UnitApp struct {
-	db IUnitDB
+	db UnitRepository
+	mutex *sync.Mutex
 }
 
 type RequiredParameters struct {
@@ -65,11 +67,12 @@ type UnitEditAppData struct {
 	AdditionalRule string
 }
 
-func CreateUnitApp(db IUnitDB) UnitApp {
-	return UnitApp{db}
+func CreateUnitApp(db UnitRepository ) UnitApp {
+	var mutex = &sync.Mutex{}
+	return UnitApp{db, mutex}
 }
 
-func (app *UnitApp) convertUnitToUnitAppData(unit Unit) UnitAppData {
+func (app *UnitApp) createUnitAppData(unit Unit) UnitAppData {
 	unitApp := UnitAppData{
 		unit.Id,
 		unit.Name,
@@ -84,7 +87,7 @@ func (app *UnitApp) convertUnitToUnitAppData(unit Unit) UnitAppData {
 	return unitApp
 }
 
-func (app *UnitApp) convertUnitEditEditAppDataToUnitAppData(id string, unitEdit UnitEditAppData) UnitAppData {
+func (app *UnitApp) createUnitAppDataById(id string, unitEdit UnitEditAppData) UnitAppData {
 	UnitAppData := UnitAppData {
 		id,
 		unitEdit.Name,
@@ -99,7 +102,7 @@ func (app *UnitApp) convertUnitEditEditAppDataToUnitAppData(id string, unitEdit 
 	return UnitAppData
 }
 
-func (app *UnitApp) convertUnitAppDataToUnitInputData(unitApp UnitAppData) UnitInputData {
+func (app *UnitApp) createUnitInputData(unitApp UnitAppData) UnitInputData {
 	unitInData := UnitInputData{
 		unitApp.Id,
 		unitApp.Name,
@@ -114,7 +117,7 @@ func (app *UnitApp) convertUnitAppDataToUnitInputData(unitApp UnitAppData) UnitI
 	return unitInData
 }
 
-func (app *UnitApp) convertUnitToRequiredParameters(unit Unit) RequiredParameters {
+func (app *UnitApp) createRequiredParameters(unit Unit) RequiredParameters {
 	requiredParameters := RequiredParameters{
 		unit.Name,
 		unit.ForceName,
@@ -134,22 +137,22 @@ func (app *UnitApp) generateId() (string, error) {
 }
 
 func (app *UnitApp) unitIdExist(id string) bool {
-	unit, err := app.db.GetUnitInDBById(id)
+	unit, err := app.db.GetUnitById(id)
 	return (err == nil) && (unit.Id != "")
 }
 
 func (app *UnitApp) unitExist(unit Unit) bool {
-	unitInput := app.convertUnitToRequiredParameters(unit)
-	unit, err := app.db.GetUnitInDBByRequiredParameters(unitInput)
+	unitInput := app.createRequiredParameters(unit)
+	unit, err := app.db.GetUnitByRequiredParameters(unitInput)
 	return (err == nil) && (unit.Id != "")
 }
 
 func (app *UnitApp) GetUnitById(id string) (UnitAppData, error) {
-	unit, err := app.db.GetUnitInDBById(id)
+	unit, err := app.db.GetUnitById(id)
 	if err != nil {
 		return UnitAppData {}, err
 	}
-	unitApp := app.convertUnitToUnitAppData(unit)
+	unitApp := app.createUnitAppData(unit)
 	return unitApp, nil
 }
 
@@ -162,7 +165,7 @@ func (app *UnitApp) GetAllUnit() ([]UnitAppData, error) {
 
 	for i := 0; i < len(unitsDB); i++ {
 		unitDB := unitsDB[i]
-		unitInf := app.convertUnitToUnitAppData(unitDB)
+		unitInf := app.createUnitAppData(unitDB)
 		units = append(units, unitInf)
 	}
 
@@ -181,8 +184,8 @@ func (app *UnitApp) AddNewUnit(unitInfo UnitEditAppData) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	unitApp := app.convertUnitEditEditAppDataToUnitAppData(id, unitInfo)
-	unitInData := app.convertUnitAppDataToUnitInputData(unitApp)
+	unitApp := app.createUnitAppDataById(id, unitInfo)
+	unitInData := app.createUnitInputData(unitApp)
 	unit, err := CreateUnit(unitInData)
 	if err != nil {
 		return "", err
@@ -191,7 +194,9 @@ func (app *UnitApp) AddNewUnit(unitInfo UnitEditAppData) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	app.mutex.Lock()
 	insertedId, err := app.db.InsertNewUnit(unit)
+	app.mutex.Unlock()
 	if err != nil {
 		return "", err
 	}
@@ -206,8 +211,8 @@ func (app *UnitApp) assertEquipmentNotExist(id string) error {
 }
 
 func (app *UnitApp) UpdateUnit(id string, unitEditInf UnitEditAppData) (string, error) {
-	unitApp := app.convertUnitEditEditAppDataToUnitAppData(id, unitEditInf)
-	unitInData := app.convertUnitAppDataToUnitInputData(unitApp)
+	unitApp := app.createUnitAppDataById(id, unitEditInf)
+	unitInData := app.createUnitInputData(unitApp)
 	unit, err := CreateUnit(unitInData)
 	if err != nil {
 		return "", err
@@ -216,7 +221,9 @@ func (app *UnitApp) UpdateUnit(id string, unitEditInf UnitEditAppData) (string, 
 	if err != nil {
 		return "", err
 	}
+	app.mutex.Lock()
 	updateId, err := app.db.UpdateUnit(unit)
+	app.mutex.Unlock()
 	if err != nil {
 		return "", err
 	}
@@ -228,7 +235,9 @@ func (app *UnitApp) DeleteById(id string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	app.mutex.Lock()
 	deleteId, err := app.db.DeleteUnit(id)
+	app.mutex.Unlock()
 	if err != nil {
 		return "", err
 	}

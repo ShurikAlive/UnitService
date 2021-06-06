@@ -1,9 +1,9 @@
 package UnitMySQLDB
 
 import (
-	"UnitService/cmd/DB"
-	App "UnitService/pkg/Unit/app"
-	Model "UnitService/pkg/Unit/model"
+	App "UnitService/pkg/unit/app"
+	Model "UnitService/pkg/unit/model"
+	DB "UnitService/pkg/common/infrastructure"
 	"errors"
 )
 
@@ -15,14 +15,14 @@ type MySQLDB struct {
 	Connection *DB.Connection
 }
 
-func NewUnitDB(connection *DB.Connection) App.IUnitDB {
+func NewUnitDB(connection *DB.Connection) App.UnitRepository {
 	if connection.Db == nil {
 		return nil
 	}
 	return &MySQLDB{connection}
 }
 
-func (db *MySQLDB) GetUnitInDBById(id string) (Model.Unit, error) {
+func (db *MySQLDB) GetUnitById(id string) (Model.Unit, error) {
 	query := "SELECT * FROM unit_db.units where id = '" + id + "';";
 	rows, err := db.Connection.Db.Query(query)
 	if err != nil {
@@ -52,7 +52,7 @@ func (db *MySQLDB) GetUnitInDBById(id string) (Model.Unit, error) {
 	return unit, nil
 }
 
-func (db *MySQLDB) GetUnitInDBByRequiredParameters(unitParams App.RequiredParameters) (Model.Unit, error) {
+func (db *MySQLDB) GetUnitByRequiredParameters(unitParams App.RequiredParameters) (Model.Unit, error) {
 	query := "SELECT * FROM unit_db.units where name = '" + unitParams.Name + "' AND ForceName = '" + unitParams.ForceName + "';";
 	rows, err := db.Connection.Db.Query(query)
 	if err != nil {

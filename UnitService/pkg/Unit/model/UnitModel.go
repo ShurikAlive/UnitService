@@ -105,7 +105,7 @@ func assertInitiativeIncorrect(initiative int32) error {
 	return nil
 }
 
-func ConvertUnitInputDataToUnit(unitInData UnitInputData) Unit {
+func createUnit(unitInData UnitInputData) Unit {
 	unit := Unit{
 		unitInData.Id,
 		unitInData.Name,
@@ -156,5 +156,5 @@ func CreateUnit(unitInData UnitInputData) (Unit, error) {
 		return Unit{}, err
 	}
 
-	return ConvertUnitInputDataToUnit(unitInData), nil
+	return createUnit(unitInData), nil
 }

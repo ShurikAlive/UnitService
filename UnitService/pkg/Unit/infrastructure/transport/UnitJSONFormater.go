@@ -1,7 +1,7 @@
 package transport
 
 import (
-	. "UnitService/pkg/Unit/app"
+	. "UnitService/pkg/unit/app"
 	"encoding/json"
 )
 
@@ -49,7 +49,7 @@ func CreateJSONFormatter() JsonFormatter {
 	return JsonFormatter{}
 }
 
-func (formatter *JsonFormatter) convertAllUnitAppToAllUnitJson(unitsApp []UnitAppData) ([]UnitJSON) {
+func (formatter *JsonFormatter) createAllUnitsJson(unitsApp []UnitAppData) ([]UnitJSON) {
 	units := []UnitJSON {}
 	for i := 0; i < len(unitsApp); i++ {
 		unitApp := unitsApp[i]
@@ -70,7 +70,7 @@ func (formatter *JsonFormatter) convertAllUnitAppToAllUnitJson(unitsApp []UnitAp
 	return units
 }
 
-func (formatter *JsonFormatter) convertUnitAppToAllUnitJson(unitApp UnitAppData) UnitJSON {
+func (formatter *JsonFormatter) createAllUnitJson(unitApp UnitAppData) UnitJSON {
 	unit := UnitJSON{
 		unitApp.Id,
 		unitApp.Name,
@@ -85,7 +85,7 @@ func (formatter *JsonFormatter) convertUnitAppToAllUnitJson(unitApp UnitAppData)
 	return unit
 }
 
-func (formatter *JsonFormatter) convertEditUnitJSONToUnitEditAppData(unit EditUnitJSON) UnitEditAppData {
+func (formatter *JsonFormatter) createUnitEditAppData(unit EditUnitJSON) UnitEditAppData {
 	unitApp := UnitEditAppData{
 		unit.Name,
 		unit.ForceName,
@@ -104,7 +104,7 @@ func (formatter *JsonFormatter) ConvertIdToJSON (id string) string {
 }
 
 func (formatter *JsonFormatter) ConvertAllUnitAppDataToJSON (units []UnitAppData)  ([]byte, error) {
-	unitsJson := formatter.convertAllUnitAppToAllUnitJson(units)
+	unitsJson := formatter.createAllUnitsJson(units)
 	b, err := json.Marshal(unitsJson)
 
 	if err != nil {
@@ -115,7 +115,7 @@ func (formatter *JsonFormatter) ConvertAllUnitAppDataToJSON (units []UnitAppData
 }
 
 func (formatter *JsonFormatter) ConvertUnitAppDataToJSON (unit UnitAppData)  ([]byte, error) {
-	unitJson := formatter.convertUnitAppToAllUnitJson(unit)
+	unitJson := formatter.createAllUnitJson(unit)
 	b, err := json.Marshal(unitJson)
 
 	if err != nil {
@@ -132,7 +132,7 @@ func (formatter *JsonFormatter) ConvertJsonToUnitEditAppData (unitJson []byte) (
 		return UnitEditAppData{}, err
 	}
 
-	return formatter.convertEditUnitJSONToUnitEditAppData(msg), nil
+	return formatter.createUnitEditAppData(msg), nil
 }
 
 

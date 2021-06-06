@@ -1,10 +1,10 @@
 package main
 
 import (
-	Swagger "UnitService/Swagger/go"
-	"UnitService/cmd/DB"
-	Equipment "UnitService/pkg/Equipment/infrastructure/transport"
-	Unit "UnitService/pkg/Unit/infrastructure/transport"
+	"UnitService/pkg/common/infrastructure"
+	Equipment "UnitService/pkg/equipment/infrastructure/transport"
+	Unit "UnitService/pkg/unit/infrastructure/transport"
+	Swagger "UnitService/swagger/go"
 	"context"
 	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
@@ -16,13 +16,19 @@ import (
 
 func main() {
 	serverParameters := initServerParameters()
-	initLogFile()
+	initLog()
 
-	db, err := DB.InitDB()
+	db, err := infrastructure.InitDB(serverParameters.DBType, serverParameters.DBUsername, serverParameters.DBPassword, serverParameters.DBName)
 	if err != nil {
+		log.Fatal(err)
 		return
 	}
 	defer db.DisconectDB()
+	err = db.MakeMigrationDB(serverParameters.DBMigrationsPath)
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
 
 	serverUrl := serverParameters.ServeRESTAddress
 	killSignalChan := getKillSignalChan()
@@ -39,24 +45,19 @@ func initServerParameters() (*Config) {
 	return serverParameters
 }
 
-func initLogFile() {
+func initLog() {
 	log.SetFormatter(&log.JSONFormatter{})
-	file, err := os.OpenFile("my.log", os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0666)
-	if err == nil {
-		log.SetOutput(file)
-		defer file.Close()
-	}
 }
 
-func InitUnitHendlerFunc(router *mux.Router, connection *DB.Connection) (*mux.Router) {
+func InitUnitHendlerFunc(router *mux.Router, connection *infrastructure.Connection) (*mux.Router) {
 	unitServer := Unit.CreateUnitServer(connection)
 
 	unitHandlerFuncs := map[string]http.HandlerFunc {
 		"UnitGet" : unitServer.UnitGet,
 		"UnitPost" : unitServer.UnitPost,
-		"UnitUnitIdDelete" : unitServer.UnitUnitIdDelete,
-		"UnitUnitIdPut" : unitServer.UnitUnitIdPut,
-		"UnitUnitIdGet" : unitServer.UnitUnitIdGet,
+		"UnitUnitIdDelete" : unitServer.UnitIdDelete,
+		"UnitUnitIdPut" : unitServer.UnitIdPut,
+		"UnitUnitIdGet" : unitServer.UnitIdGet,
 	}
 
 	for name, unitHendlerFunc := range unitHandlerFuncs {
@@ -66,13 +67,13 @@ func InitUnitHendlerFunc(router *mux.Router, connection *DB.Connection) (*mux.Ro
 	return router
 }
 
-func InitEquipmentHendlerFunc(router *mux.Router, connection *DB.Connection) (*mux.Router) {
+func InitEquipmentHendlerFunc(router *mux.Router, connection *infrastructure.Connection) (*mux.Router) {
 	equipmentServer := Equipment.CreateEquipmentServer(connection)
 
 	equipmentHandlerFuncs := map[string]http.HandlerFunc {
-		"EquipmentEquipmentIdDelete" : equipmentServer.EquipmentEquipmentIdDelete,
-		"EquipmentEquipmentIdGet" : equipmentServer.EquipmentEquipmentIdGet,
-		"EquipmentEquipmentIdPut" : equipmentServer.EquipmentEquipmentIdPut,
+		"EquipmentEquipmentIdDelete" : equipmentServer.EquipmentIdDelete,
+		"EquipmentEquipmentIdGet" : equipmentServer.EquipmentIdGet,
+		"EquipmentEquipmentIdPut" : equipmentServer.EquipmentIdPut,
 		"EquipmentGet" : equipmentServer.EquipmentGet,
 		"EquipmentPost" : equipmentServer.EquipmentPost,
 	}
@@ -84,7 +85,7 @@ func InitEquipmentHendlerFunc(router *mux.Router, connection *DB.Connection) (*m
 	return router
 }
 
-func startServer(connection *DB.Connection, serverUrl string) *http.Server {
+func startServer(connection *infrastructure.Connection, serverUrl string) *http.Server {
 	router := Swagger.NewRouter()
 	router = InitUnitHendlerFunc(router, connection)
 	router = InitEquipmentHendlerFunc(router, connection)

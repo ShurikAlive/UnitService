@@ -8,6 +8,7 @@ var InvalidEquipmentLimitOnUnit = errors.New("incorrect Limit On Unit Equipment"
 var InvalidEquipmentLimitOnTeam = errors.New("incorrect Limit On Team Equipment")
 var InvalidEquipmentAmmo = errors.New("incorrect Ammo Equipment")
 var InvalidEquipmentCost = errors.New("incorrect Cost Equipment")
+var InvalidEquipmentRule = errors.New("incorrect Rule Equipment")
 
 type Equipment struct {
 	// ID equipment
@@ -47,8 +48,8 @@ type EquipmentInputData struct {
 	Cost int32
 }
 
-func convertEquipmentInputDataToUnit(equipmentInData EquipmentInputData) Equipment {
-	unit := Equipment{
+func createUnit(equipmentInData EquipmentInputData) Equipment {
+	equipment := Equipment{
 		equipmentInData.Id,
 		equipmentInData.Name,
 		equipmentInData.LimitOnUnit,
@@ -59,7 +60,7 @@ func convertEquipmentInputDataToUnit(equipmentInData EquipmentInputData) Equipme
 		equipmentInData.Cost,
 	}
 
-	return unit
+	return equipment
 }
 
 func isEmpty(param string) bool {
@@ -84,22 +85,29 @@ func assertNameEmptiness(name string) error {
 	return nil
 }
 
+func assertRuleEmptiness(rule string) error {
+	if isEmpty(rule) {
+		return InvalidEquipmentRule
+	}
+	return nil
+}
+
 func assertLimitOnUnitEmptiness(limitOnUnit int32) error {
-	if isNotNaturalNumber(limitOnUnit) || (limitOnUnit != -1) {
+	if isNotNaturalNumber(limitOnUnit) && (limitOnUnit != -1) {
 		return InvalidEquipmentLimitOnUnit
 	}
 	return nil
 }
 
 func assertLimitOnTeamEmptiness(limitOnTeam int32) error {
-	if isNotNaturalNumber(limitOnTeam) || (limitOnTeam != -1) {
+	if isNotNaturalNumber(limitOnTeam) && (limitOnTeam != -1) {
 		return InvalidEquipmentLimitOnTeam
 	}
 	return nil
 }
 
 func assertAmmoEmptiness(ammo int32) error {
-	if isNotNaturalNumber(ammo) || (ammo != -1) {
+	if isNotNaturalNumber(ammo) && (ammo != -1) {
 		return InvalidEquipmentAmmo
 	}
 	return nil
@@ -119,6 +127,11 @@ func CreateEquipment(equipmentInData EquipmentInputData) (Equipment, error) {
 	}
 
 	err = assertNameEmptiness(equipmentInData.Name)
+	if err != nil {
+		return Equipment{}, err
+	}
+
+	err = assertRuleEmptiness(equipmentInData.Rule)
 	if err != nil {
 		return Equipment{}, err
 	}
@@ -143,5 +156,5 @@ func CreateEquipment(equipmentInData EquipmentInputData) (Equipment, error) {
 		return Equipment{}, err
 	}
 
-	return convertEquipmentInputDataToUnit(equipmentInData), nil
+	return createUnit(equipmentInData), nil
 }

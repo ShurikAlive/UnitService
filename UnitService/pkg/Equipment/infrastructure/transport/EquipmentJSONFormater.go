@@ -1,7 +1,7 @@
 package EquipmentTransport
 
 import (
-	App "UnitService/pkg/Equipment/app"
+	App "UnitService/pkg/equipment/app"
 	"encoding/json"
 )
 
@@ -50,7 +50,7 @@ func CreateJSONFormatter() JsonFormatter {
 }
 
 
-func (formatter *JsonFormatter) convertAllEquipmentAppToAllEquipmentJson(equipmentsApp []App.EquipmentAppData) []EquipmentJSON {
+func (formatter *JsonFormatter) createAllEquipmentsJson(equipmentsApp []App.EquipmentAppData) []EquipmentJSON {
 	var equipments []EquipmentJSON
 	for i := 0; i < len(equipmentsApp); i++ {
 		equipmentApp := equipmentsApp[i]
@@ -71,7 +71,7 @@ func (formatter *JsonFormatter) convertAllEquipmentAppToAllEquipmentJson(equipme
 	return equipments
 }
 
-func (formatter *JsonFormatter) convertEquipmentAppToAllEquipmentJson(equipmentApp App.EquipmentAppData) EquipmentJSON {
+func (formatter *JsonFormatter) createAllEquipmentJson(equipmentApp App.EquipmentAppData) EquipmentJSON {
 	equipment := EquipmentJSON{
 		equipmentApp.Id,
 		equipmentApp.Name,
@@ -86,7 +86,7 @@ func (formatter *JsonFormatter) convertEquipmentAppToAllEquipmentJson(equipmentA
 	return equipment
 }
 
-func (formatter *JsonFormatter) convertEditEquipmentJSONToEquipmentEditAppData(equipment EditEquipmentJSON) App.EditEquipmentAppData {
+func (formatter *JsonFormatter) createEquipmentEditAppData(equipment EditEquipmentJSON) App.EditEquipmentAppData {
 	equipmentApp := App.EditEquipmentAppData{
 		equipment.Name,
 		equipment.LimitOnUnit,
@@ -105,7 +105,7 @@ func (formatter *JsonFormatter) ConvertIdToJSON (id string) string {
 }
 
 func (formatter *JsonFormatter) ConvertAllEquipmentAppDataToJSON (equipments []App.EquipmentAppData)  ([]byte, error) {
-	equipmentsJson := formatter.convertAllEquipmentAppToAllEquipmentJson(equipments)
+	equipmentsJson := formatter.createAllEquipmentsJson(equipments)
 	b, err := json.Marshal(equipmentsJson)
 
 	if err != nil {
@@ -116,7 +116,7 @@ func (formatter *JsonFormatter) ConvertAllEquipmentAppDataToJSON (equipments []A
 }
 
 func (formatter *JsonFormatter) ConvertEquipmentAppDataToJSON (equipment App.EquipmentAppData)  ([]byte, error) {
-	equipmentJson := formatter.convertEquipmentAppToAllEquipmentJson(equipment)
+	equipmentJson := formatter.createAllEquipmentJson(equipment)
 	b, err := json.Marshal(equipmentJson)
 
 	if err != nil {
@@ -133,6 +133,6 @@ func (formatter *JsonFormatter) ConvertJsonToEquipmentEditAppData (equipmentJson
 		return App.EditEquipmentAppData{}, err
 	}
 
-	return formatter.convertEditEquipmentJSONToEquipmentEditAppData(msg), nil
+	return formatter.createEquipmentEditAppData(msg), nil
 }
 
