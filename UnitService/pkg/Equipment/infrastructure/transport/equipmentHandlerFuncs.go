@@ -8,9 +8,11 @@ import (
 	"fmt"
 	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
+	"github.com/streadway/amqp"
 	"io"
 	"io/ioutil"
 	"net/http"
+	Roster "UnitService/pkg/equipment/infrastructure/transport/services/roster"
 )
 
 type EquipmentServer struct {
@@ -18,11 +20,12 @@ type EquipmentServer struct {
 	formatter   JsonFormatter
 }
 
-func CreateEquipmentServer(connection *DB.Connection) *EquipmentServer {
+func CreateEquipmentServer(connection *DB.Connection, channelRebbitMQ *amqp.Channel, queueRebbitMQ amqp.Queue) *EquipmentServer {
 
 	equipmentServer := new(EquipmentServer)
 	db := MySqlDB.CreateMySQLDB(connection)
-	equipmentServer.app = App.CreateEquipmentApp(db)
+	rosterService := Roster.CreateRosterServices(channelRebbitMQ, queueRebbitMQ)
+	equipmentServer.app = App.CreateEquipmentApp(db, rosterService)
 	equipmentServer.formatter = CreateJSONFormatter()
 	return equipmentServer
 }

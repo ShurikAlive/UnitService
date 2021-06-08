@@ -18,8 +18,13 @@ type EquipmentRepository interface {
 	DeleteEquipment(id string) (string, error)
 }
 
+type RosterRepository interface {
+	SendEvent(typeEvent string, idRecord string) error
+}
+
 type EquipmentApp struct {
 	db EquipmentRepository
+	roster RosterRepository
 	mutex *sync.Mutex
 }
 
@@ -76,9 +81,9 @@ func generateId() (string, error) {
 	return id, nil
 }
 
-func CreateEquipmentApp(db EquipmentRepository) EquipmentApp {
+func CreateEquipmentApp(db EquipmentRepository, roster RosterRepository) EquipmentApp {
 	var mutex = &sync.Mutex{}
-	return EquipmentApp{db, mutex}
+	return EquipmentApp{db, roster, mutex}
 }
 
 func (app *EquipmentApp) createEquipmentAppById (id string, equipmentEdit EditEquipmentAppData) EquipmentAppData {
@@ -180,6 +185,10 @@ func (app *EquipmentApp) DeleteByIdApp(id string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	err = app.roster.SendEvent("DELETE", deleteId)
+	if err != nil {
+		return "", err
+	}
 	return deleteId, nil
 }
 
@@ -238,6 +247,10 @@ func (app *EquipmentApp) UpdateEquipmentApp(id string, equipmentInfo EditEquipme
 	app.mutex.Lock()
 	updateId, err := app.db.UpdateEquipment(equipment)
 	app.mutex.Unlock()
+	if err != nil {
+		return "", err
+	}
+	err = app.roster.SendEvent("UPDATE", updateId)
 	if err != nil {
 		return "", err
 	}

@@ -12,6 +12,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"github.com/streadway/amqp"
 )
 
 func main() {
@@ -30,9 +31,34 @@ func main() {
 		return
 	}
 
+	conn, err := amqp.Dial(serverParameters.ConnectRabbitMQ)
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
+	defer conn.Close()
+	ch, err := conn.Channel()
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
+	defer ch.Close()
+	q, err := ch.QueueDeclare(
+		serverParameters.QueueNameRabbitMQ, // name
+		false,   // durable
+		false,   // delete when unused
+		false,   // exclusive
+		false,   // no-wait
+		nil,     // arguments
+	)
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
+
 	serverUrl := serverParameters.ServeRESTAddress
 	killSignalChan := getKillSignalChan()
-	srv := startServer(db, serverUrl)
+	srv := startServer(db, serverUrl, ch, q)
 	waitForKillSignal(killSignalChan)
 	srv.Shutdown(context.Background())
 }
@@ -49,8 +75,8 @@ func initLog() {
 	log.SetFormatter(&log.JSONFormatter{})
 }
 
-func InitUnitHendlerFunc(router *mux.Router, connection *infrastructure.Connection) (*mux.Router) {
-	unitServer := Unit.CreateUnitServer(connection)
+func InitUnitHendlerFunc(router *mux.Router, connection *infrastructure.Connection, channelRebbitMQ *amqp.Channel, queueRebbitMQ amqp.Queue) (*mux.Router) {
+	unitServer := Unit.CreateUnitServer(connection, channelRebbitMQ, queueRebbitMQ)
 
 	unitHandlerFuncs := map[string]http.HandlerFunc {
 		"UnitGet" : unitServer.UnitGet,
@@ -67,8 +93,8 @@ func InitUnitHendlerFunc(router *mux.Router, connection *infrastructure.Connecti
 	return router
 }
 
-func InitEquipmentHendlerFunc(router *mux.Router, connection *infrastructure.Connection) (*mux.Router) {
-	equipmentServer := Equipment.CreateEquipmentServer(connection)
+func InitEquipmentHendlerFunc(router *mux.Router, connection *infrastructure.Connection, channelRebbitMQ *amqp.Channel, queueRebbitMQ amqp.Queue) (*mux.Router) {
+	equipmentServer := Equipment.CreateEquipmentServer(connection, channelRebbitMQ, queueRebbitMQ)
 
 	equipmentHandlerFuncs := map[string]http.HandlerFunc {
 		"EquipmentEquipmentIdDelete" : equipmentServer.EquipmentIdDelete,
@@ -85,10 +111,10 @@ func InitEquipmentHendlerFunc(router *mux.Router, connection *infrastructure.Con
 	return router
 }
 
-func startServer(connection *infrastructure.Connection, serverUrl string) *http.Server {
+func startServer(connection *infrastructure.Connection, serverUrl string, channelRebbitMQ *amqp.Channel, queueRebbitMQ amqp.Queue) *http.Server {
 	router := Swagger.NewRouter()
-	router = InitUnitHendlerFunc(router, connection)
-	router = InitEquipmentHendlerFunc(router, connection)
+	router = InitUnitHendlerFunc(router, connection, channelRebbitMQ, queueRebbitMQ)
+	router = InitEquipmentHendlerFunc(router, connection, channelRebbitMQ, queueRebbitMQ)
 	log.Fatal(http.ListenAndServe(serverUrl, router))
 	srv := &http.Server{Addr: serverUrl, Handler: router}
 	go func() {

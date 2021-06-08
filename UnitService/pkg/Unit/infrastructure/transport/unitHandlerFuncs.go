@@ -1,6 +1,7 @@
 package transport
 
 import (
+	Roster "UnitService/pkg/unit/infrastructure/transport/services/roster"
 	App "UnitService/pkg/unit/app"
 	MySqlDB "UnitService/pkg/unit/infrastructure/db"
 	Model "UnitService/pkg/unit/model"
@@ -8,6 +9,7 @@ import (
 	"fmt"
 	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
+	"github.com/streadway/amqp"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -18,10 +20,11 @@ type UnitServer struct {
 	formatter   JsonFormatter
 }
 
-func CreateUnitServer(connection *DB.Connection) (*UnitServer) {
+func CreateUnitServer(connection *DB.Connection, channelRebbitMQ *amqp.Channel, queueRebbitMQ amqp.Queue) (*UnitServer) {
 	unitServer := new(UnitServer)
 	db := MySqlDB.NewUnitDB(connection)
-	unitServer.app = App.CreateUnitApp(db)
+	rosterService := Roster.CreateRosterServices(channelRebbitMQ, queueRebbitMQ)
+	unitServer.app = App.CreateUnitApp(db, rosterService)
 	unitServer.formatter = CreateJSONFormatter()
 	return unitServer
 }

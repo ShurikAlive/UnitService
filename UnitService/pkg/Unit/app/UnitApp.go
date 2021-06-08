@@ -19,8 +19,13 @@ type UnitRepository interface {
 	DeleteUnit(id string) (string, error)
 }
 
+type RosterRepository interface {
+	SendEvent(typeEvent string, idRecord string) error
+}
+
 type UnitApp struct {
 	db UnitRepository
+	roster RosterRepository
 	mutex *sync.Mutex
 }
 
@@ -67,9 +72,9 @@ type UnitEditAppData struct {
 	AdditionalRule string
 }
 
-func CreateUnitApp(db UnitRepository ) UnitApp {
+func CreateUnitApp(db UnitRepository, roster RosterRepository) UnitApp {
 	var mutex = &sync.Mutex{}
-	return UnitApp{db, mutex}
+	return UnitApp{db, roster,mutex}
 }
 
 func (app *UnitApp) createUnitAppData(unit Unit) UnitAppData {
@@ -227,6 +232,10 @@ func (app *UnitApp) UpdateUnit(id string, unitEditInf UnitEditAppData) (string, 
 	if err != nil {
 		return "", err
 	}
+	err = app.roster.SendEvent("UPDATE", updateId)
+	if err != nil {
+		return "", err
+	}
 	return updateId, nil
 }
 
@@ -238,6 +247,10 @@ func (app *UnitApp) DeleteById(id string) (string, error) {
 	app.mutex.Lock()
 	deleteId, err := app.db.DeleteUnit(id)
 	app.mutex.Unlock()
+	if err != nil {
+		return "", err
+	}
+	err = app.roster.SendEvent("DELETE", deleteId)
 	if err != nil {
 		return "", err
 	}
